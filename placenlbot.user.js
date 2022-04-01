@@ -108,7 +108,7 @@ async function attemptPlace() {
 }
 
 function updateOrders() {
-	fetch('https://placenl.github.io/Orders/orders.json').then(async (response) => {
+	fetch('https://raw.githubusercontent.com/WaveLinkdev/Bot/master/orders.json').then(async (response) => {
 		if (!response.ok) return console.warn('Kan orders niet ophalen! (non-ok status code)');
 		const data = await response.json();
 
