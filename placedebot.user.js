@@ -136,7 +136,7 @@ async function attemptPlace() {
 }
 
 function updateOrders() {
-	fetch('https://placenl.github.io/Orders/orders.json').then(async (response) => {
+	fetch('https://placede.github.io/pixel/pixel.json').then(async (response) => {
 		if (!response.ok) return console.warn('Bestellungen können nicht geladen werden!');
 		const data = await response.json();
 
