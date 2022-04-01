@@ -47,12 +47,12 @@ const COLOR_MAPPINGS = {
 	canvas = document.body.appendChild(canvas);
 
 	Toastify({
-		text: 'Accesstoken ophalen...',
+		text: 'Abfrage des Zugriffstokens...',
 		duration: 10000
 	}).showToast();
 	accessToken = await getAccessToken();
 	Toastify({
-		text: 'Accesstoken opgehaald!',
+		text: 'Zugriffstoken eingesammelt!',
 		duration: 10000
 	}).showToast();
 
@@ -94,9 +94,9 @@ async function attemptPlace() {
 		const canvasUrl = await getCurrentImageUrl();
 		ctx = await getCanvasFromUrl(canvasUrl);
 	} catch (e) {
-		console.warn('Fout bij ophalen map: ', e);
+		console.warn('Fehler beim Abrufen der Zeichenfläche:', e);
 		Toastify({
-			text: 'Fout bij ophalen map. Opnieuw proberen in 15 sec...',
+			text: 'Fehler beim Abrufen der Zeichenfläche. Neuer Versuch in 15 Sekunden...',
 			duration: 10000
 		}).showToast();
 		setTimeout(attemptPlace, 15000); // probeer opnieuw in 15sec.
@@ -115,13 +115,13 @@ async function attemptPlace() {
 		if (currentColorId == colorId) continue;
 
 		Toastify({
-			text: `Pixel proberen te plaatsen op ${x}, ${y}...`,
+			text: `Pixel wird gesetzt auf ${x}, ${y}...`,
 			duration: 10000
 		}).showToast();
 		await place(x, y, colorId);
 
 		Toastify({
-			text: `Wachten op cooldown...`,
+			text: `Warten auf Abkühlzeit.`,
 			duration: 315000
 		}).showToast();
 		setTimeout(attemptPlace, 315000); // 5min en 15sec, just to be safe.
@@ -129,26 +129,26 @@ async function attemptPlace() {
 	}
 
 	Toastify({
-		text: 'Alle pixels staan al op de goede plaats!',
+		text: 'Alle bestellten Pixel haben bereits die richtige Farbe!',
 		duration: 10000
 	}).showToast();
 	setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
 }
 
 function updateOrders() {
-	fetch('https://placede.github.io/pixel/pixel.json').then(async (response) => {
-		if (!response.ok) return console.warn('Could not load work! (non-ok status code)');
+	fetch('https://placenl.github.io/Orders/orders.json').then(async (response) => {
+		if (!response.ok) return console.warn('Bestellungen können nicht geladen werden!');
 		const data = await response.json();
 
 		if (JSON.stringify(data) !== JSON.stringify(placeOrders)) {
 			Toastify({
-				text: `Work loaded!`,
+				text: `Neue Bestellungen geladen. Gesamtanzahl: ${data.length}.`,
 				duration: 10000
 			}).showToast();
 		}
 
 		placeOrders = data;
-	}).catch((e) => console.warn('Kan orders niet ophalen!', e));
+	}).catch((e) => console.warn('Bestellungen können nicht geladen werden!', e));
 }
 
 function place(x, y, color) {
