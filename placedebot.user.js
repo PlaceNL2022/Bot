@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         PlaceNL Bot
-// @namespace    https://github.com/PlaceNL/Bot
+// @name         PlaceDE Bot
+// @namespace    https://github.com/PlaceDE/Bot
 // @version      3
-// @description  De bot voor PlaceNL!
+// @description  /r/place bot
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
 // @match        https://new.reddit.com/r/place/*
@@ -136,7 +136,7 @@ async function attemptPlace() {
 }
 
 function updateOrders() {
-	fetch('https://placenl.github.io/Orders/orders.json').then(async (response) => {
+	fetch('https://placede.github.io/pixel/pixel.json').then(async (response) => {
 		if (!response.ok) return console.warn('Could not load work! (non-ok status code)');
 		const data = await response.json();
 
