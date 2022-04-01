@@ -7,7 +7,7 @@ Der Bot für PlaceDE! Dieser Bot holt automatisch alle paar Minuten [Pläne](htt
 Überprüfe, dass gerade neue Pixel plaziert werden können und dies nicht auf Cooldown ist
 
 1. Installiere die Browsererweiterung [Tampermonkey](https://www.tampermonkey.net/).
-2. Klicke auf diesen Link: [https://github.com/PlaceDE/Bot/raw/master/placedebot.user.js](https://github.com/PlaceDE/Bot/raw/master/placedebot.user.js). Wenn alles gut geht, bietet Tampermonkey an, ein Benutzerskript zu installieren. Klicke auf **Installieren**.
+2. Klicke auf diesen Link: [https://github.com/PlaceDE/Bot/raw/main/placedebot.user.js](https://github.com/PlaceDE/Bot/raw/main/placedebot.user.js). Wenn alles gut geht, bietet Tampermonkey an, ein Benutzerskript zu installieren. Klicke auf **Installieren**.
 3. Lade den **r/place** Tab neu. Wenn alles gut gegangen ist, sollte "Abfrage des Zugriffstokens..." oben rechts auf dem Bildschirm zu sehen sein. Der Bot ist nun aktiv und wird diese Benachrichtigungen oben rechts für laufende Informationen nutzen.
 
 ## Schwachstellen des Bots
