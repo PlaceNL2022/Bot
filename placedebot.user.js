@@ -61,6 +61,33 @@ const COLOR_MAPPINGS = {
 	attemptPlace();
 })();
 
+
+function getWork() {
+	const pixel = placeOrders
+		.map(it => it.pixel)
+		.flat()
+	shuffle(pixel)
+	return pixel
+}
+
+// from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+function shuffle(array) {
+	let currentIndex = array.length,  randomIndex;
+
+	// While there remain elements to shuffle...
+	while (currentIndex != 0) {
+
+		// Pick a remaining element...
+		randomIndex = Math.floor(Math.random() * currentIndex);
+		currentIndex--;
+
+		// And swap it with the current element.
+		[array[currentIndex], array[randomIndex]] = [
+			array[randomIndex], array[currentIndex]];
+	}
+
+	return array;
+}
 async function attemptPlace() {
 	var ctx;
 	try {
@@ -76,10 +103,11 @@ async function attemptPlace() {
 		return;
 	}
 
-	for (const order of placeOrders) {
+	for (const order of getWork()) {
 		const x = order[0];
 		const y = order[1];
-		const colorId = order[2];
+		const colorId = COLOR_MAPPINGS[order[2]] ?? order[2]
+
 		const rgbaAtLocation = ctx.getImageData(x, y, 1, 1).data;
 		const hex = rgbToHex(rgbaAtLocation[0], rgbaAtLocation[1], rgbaAtLocation[2]);
 		const currentColorId = COLOR_MAPPINGS[hex];
@@ -109,12 +137,12 @@ async function attemptPlace() {
 
 function updateOrders() {
 	fetch('https://placenl.github.io/Orders/orders.json').then(async (response) => {
-		if (!response.ok) return console.warn('Kan orders niet ophalen! (non-ok status code)');
+		if (!response.ok) return console.warn('Could not load work! (non-ok status code)');
 		const data = await response.json();
 
 		if (JSON.stringify(data) !== JSON.stringify(placeOrders)) {
 			Toastify({
-				text: `Nieuwe orders geladen. Totaal aantal pixels: ${data.length}.`,
+				text: `Work loaded!`,
 				duration: 10000
 			}).showToast();
 		}
