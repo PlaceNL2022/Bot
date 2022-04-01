@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot
 // @namespace    https://github.com/PlaceNL/Bot
-// @version      2
+// @version      3
 // @description  De bot voor PlaceNL!
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
@@ -56,7 +56,7 @@ const COLOR_MAPPINGS = {
 		duration: 10000
 	}).showToast();
 
-	setInterval(updateOrders, 60 * 1000); // Update orders elke minuut.
+	setInterval(updateOrders, 5 * 60 * 1000); // Update orders elke vijf minuten.
 	await updateOrders();
 	attemptPlace();
 })();
@@ -92,6 +92,10 @@ async function attemptPlace() {
 		}).showToast();
 		await place(x, y, colorId);
 
+		Toastify({
+			text: `Wachten op cooldown...`,
+			duration: 315000
+		}).showToast();
 		setTimeout(attemptPlace, 315000); // 5min en 15sec, just to be safe.
 		return;
 	}
