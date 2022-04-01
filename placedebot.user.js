@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceDE Bot
 // @namespace    https://github.com/PlaceDE/Bot
-// @version      3
+// @version      4
 // @description  /r/place bot
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
