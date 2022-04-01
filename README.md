@@ -1,6 +1,6 @@
 # PlaceNL Bot
 
-De bot voor PlaceNL! Deze bot haalt elke paar minuten automatisch orders op, om te voorkomen dat bots elkaar gaan tegenwerken.
+De bot voor PlaceNL! Deze bot haalt elke paar minuten automatisch [orders](https://github.com/PlaceNL/Orders) op, om te voorkomen dat bots elkaar gaan tegenwerken.
 
 ## Installatieinstructies
 

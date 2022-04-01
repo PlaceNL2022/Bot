@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         PlaceNL Bot
 // @namespace    https://github.com/PlaceNL/Bot
-// @version      1
+// @version      2
 // @description  De bot voor PlaceNL!
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
+// @match        https://new.reddit.com/r/place/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=reddit.com
 // @require	     https://cdn.jsdelivr.net/npm/toastify-js
 // @resource     TOASTIFY_CSS https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css
@@ -68,10 +69,10 @@ async function attemptPlace() {
 	} catch (e) {
 		console.warn('Fout bij ophalen map: ', e);
 		Toastify({
-			text: 'Fout bij ophalen map. Opnieuw proberen in 30 sec...',
+			text: 'Fout bij ophalen map. Opnieuw proberen in 15 sec...',
 			duration: 10000
 		}).showToast();
-		setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
+		setTimeout(attemptPlace, 15000); // probeer opnieuw in 15sec.
 		return;
 	}
 
