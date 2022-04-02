@@ -1,16 +1,16 @@
 # PlaceNL Bot (Czech Edition)
 
-Robot pro PlaceNL! Tento robot automaticky načítá objednávky každých pár minut, aby zabránil robotům pracovat proti sobě.
+Bot pro PlaceNL! Tento robot automaticky načítá příkazy každých pár minut, aby zabránil botům pracovat proti sobě.
 
 ## Pokyny pro instalaci
 
-Než začnete, ujistěte se, že vaše pixelová latence vypršela!
+Než začnete, ujistěte se, že odpočet pro umístění pixelu vypršel! (Viz nevýhody bota)
 
-1. Nainstalujte si rozšíření prohlížeče Tampermonkey.
+1. Nainstalujte si rozšíření prohlížeče [Tampermonkey](https://www.tampermonkey.net/)
 2. Klikněte na tento odkaz: https://github.com/PlaceCZ/Bot/raw/master/placenlbot.user.js. Pokud vše půjde dobře, Tampermonkey by vám měl nabídnout instalaci uživatelského skriptu. Klikněte na **Instalovat**.
-3. Znovu načtěte stránku **r/place**. Pokud vše proběhlo v pořádku, v pravém horním rohu obrazovky se zobrazí „Získávání přístupového tokenu...“. Robot je nyní aktivní a bude vás informovat o tom, co dělá, prostřednictvím těchto oznámení v pravé horní části obrazovky.
+3. Otevřte nebo obnovte stránku **r/place**. Pokud vše proběhlo v pořádku, v pravém horním rohu obrazovky se zobrazí „Získávání přístupového tokenu...“. Robot je nyní aktivní a bude vás informovat o tom, co dělá, prostřednictvím těchto oznámení v pravé horní části obrazovky.
 
-## Nevýhody tohoto bota
+## Nevýhody bota
 
-Když bot umístí pixel, zdá se vám, že stále můžete umístit pixel, když to bot již udělal za vás (takže jste v 5minutovém cooldownu).
-Bot ještě nezohledňuje existující cooldown, takže předpokládá, že když otevřete **r/place**, můžete okamžitě umístit pixel. V nejhorším případě by váš první pixel mohl ztratit 4 minuty a 59 sekund času.
+Když bot umístí pixel, může se zdát, že stále můžete umístit pixel i když to bot za vás už udělal.(takže jste v 5minutovém odpočtu).
+Bot totiž ještě nezohledňuje již probíhající odpočet, takže předpokládá, že když otevřete **r/place**, může okamžitě umístit pixel. V nejhorším případě se váš první pixel umístí až v dalším cyklu za 4 minuty a 59 sekund.
