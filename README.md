@@ -46,5 +46,6 @@ await getAccessToken()
     Windows: Shift+Rechter muis knop in de folder -> Click op "Powershell hier openen"
     Mac: Echt geen idee. Sorry!
     Linux: Niet echt nodig toch?
-5. Voor de bot uit met `node bot.js ACCESS_TOKEN_HIER`
-6. BONUS: Je kunt de laatse twee stappen zo vaak doen als je wil voor extra accounts. Let wel op dat je andere accounts gebruikt anders heeft het niet heel veel zin.
+5. Installeer de nodige depdendencies met `npm i`
+6. Voor de bot uit met `node bot.js ACCESS_TOKEN_HIER`
+7. BONUS: Je kunt de laatse twee stappen zo vaak doen als je wil voor extra accounts. Let wel op dat je andere accounts gebruikt anders heeft het niet heel veel zin.
