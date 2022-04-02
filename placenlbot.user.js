@@ -83,6 +83,16 @@ function connectSocket() {
 
     socket = new WebSocket(`${BackendAddress}/ws/api`);
 
+    const errorTimeout = setTimeout(() => {
+        Toastify({
+            text: 'Chyba při pokusu o připojení na PlaceCZ server',
+            duration: 10000
+        }).showToast();
+        console.error('Chyba při pokusu o připojení na PlaceCZ server')
+    }
+        
+    , 2000)
+
     socket.onopen = function () {
         Toastify({
             text: 'Připojeno na server PlaceCZ',
