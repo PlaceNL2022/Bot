@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceTUD Bot
 // @namespace    https://github.com/PlaceTUD/Soldat
-// @version      12
+// @version      13
 // @description  Der PlaceTUD Bot für die koolsten Kids der TU Darmstadt!
 // @author       Ich und der andere
 // @match        https://www.reddit.com/r/place/*
