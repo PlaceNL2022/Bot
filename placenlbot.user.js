@@ -62,12 +62,12 @@ order.sort(() => Math.random() - 0.5);
     currentPlaceCanvas = document.body.appendChild(currentPlaceCanvas);
 
     Toastify({
-        text: 'Accesstoken ophalen...',
+        text: 'Získávám přístupový token...',
         duration: 10000
     }).showToast();
     accessToken = await getAccessToken();
     Toastify({
-        text: 'Accesstoken opgehaald!',
+        text: 'Přístupový token obdržen!',
         duration: 10000
     }).showToast();
 
@@ -77,7 +77,7 @@ order.sort(() => Math.random() - 0.5);
 
 function connectSocket() {
     Toastify({
-        text: 'Verbinden met PlaceNL server...',
+        text: 'Připojuji se na server PlaceCZ',
         duration: 10000
     }).showToast();
 
@@ -85,7 +85,7 @@ function connectSocket() {
 
     socket.onopen = function () {
         Toastify({
-            text: 'Verbonden met PlaceNL server!',
+            text: 'Připojeno na server PlaceCZ',
             duration: 10000
         }).showToast();
         socket.send(JSON.stringify({ type: 'getmap' }));
@@ -102,7 +102,7 @@ function connectSocket() {
         switch (data.type.toLowerCase()) {
             case 'map':
                 Toastify({
-                    text: `Nieuwe map geladen (reden: ${data.reason ? data.reason : 'verbonden met server'})`,
+                    text: `Nové rozkazy připraveny, duvod: ${data.reason ? data.reason : 'Připojte se na PlaceCZ'})`,
                     duration: 10000
                 }).showToast();
                 currentOrderCtx = await getCanvasFromUrl(`${BackendAddress}/maps/${data.data}`, currentOrderCanvas);
@@ -115,7 +115,7 @@ function connectSocket() {
 
     socket.onclose = function (e) {
         Toastify({
-            text: `PlaceNL server heeft de verbinding verbroken: ${e.reason}`,
+            text: `Odpojen od PlaceCZ serveru: ${e.reason}`,
             duration: 10000
         }).showToast();
         console.error('Socketfout: ', e.reason);
@@ -134,9 +134,9 @@ async function attemptPlace() {
         const canvasUrl = await getCurrentImageUrl();
         ctx = await getCanvasFromUrl(canvasUrl, currentPlaceCanvas);
     } catch (e) {
-        console.warn('Fout bij ophalen map: ', e);
+        console.warn('Chyba při načítání mapy: ', e);
         Toastify({
-            text: 'Fout bij ophalen map. Opnieuw proberen in 15 sec...',
+            text: 'Chyba při načítání mapy, zkuste znovu za 15 sekund',
             duration: 15000
         }).showToast();
         setTimeout(attemptPlace, 15000); // probeer opnieuw in 15sec.
@@ -157,7 +157,7 @@ async function attemptPlace() {
         const x = i % 1000;
         const y = Math.floor(i / 1000);
         Toastify({
-            text: `Pixel proberen te plaatsen op ${x}, ${y}...`,
+            text: `Pokus o umístění pixelu na ${x}, ${y}...`,
             duration: 10000
         }).showToast();
 
@@ -170,7 +170,7 @@ async function attemptPlace() {
                 const nextPixelDate = new Date(nextPixel);
                 const delay = nextPixelDate.getTime() - Date.now();
                 Toastify({
-                    text: `Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`,
+                    text: `Příliš brzo umístěný pixel. Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
                     duration: delay
                 }).showToast();
                 setTimeout(attemptPlace, delay);
@@ -179,15 +179,15 @@ async function attemptPlace() {
                 const nextPixelDate = new Date(nextPixel);
                 const delay = nextPixelDate.getTime() - Date.now();
                 Toastify({
-                    text: `Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`,
+                    text: `Pixel položen na ${x}, ${y}! Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
                     duration: delay
                 }).showToast();
                 setTimeout(attemptPlace, delay);
             }
         } catch (e) {
-            console.warn('Fout bij response analyseren', e);
+            console.warn('Chyba pří analýze', e);
             Toastify({
-                text: `Fout bij response analyseren: ${e}.`,
+                text: `Chyba pří analýze: ${e}.`,
                 duration: 10000
             }).showToast();
             setTimeout(attemptPlace, 10000);
@@ -197,7 +197,7 @@ async function attemptPlace() {
     }
 
     Toastify({
-        text: `Alle pixels staan al op de goede plaats! Opnieuw proberen in 30 sec...`,
+        text: `Všechny pixely jsou již na správném místě! Zkouším to znovu za 30 sekund...`,
         duration: 30000
     }).showToast();
     setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
@@ -280,6 +280,7 @@ async function getCurrentImageUrl() {
             const parsed = JSON.parse(data);
 
             // TODO: ew
+            // Poznámka editora: ew indeed.
             if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
 
             ws.close();
