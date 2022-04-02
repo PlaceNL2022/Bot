@@ -16,3 +16,11 @@ Než začnete, ujistěte se, že odpočet pro umístění pixelu vypršel! (Viz 
 
 Když bot umístí pixel, může se zdát, že stále můžete umístit pixel i když to bot za vás už udělal.(takže jste v 5minutovém odpočtu).
 Bot totiž ještě nezohledňuje již probíhající odpočet, takže předpokládá, že když otevřete **r/place**, může okamžitě umístit pixel. V nejhorším případě se váš první pixel umístí až v dalším cyklu za 4 minuty a 59 sekund.
+
+## Headless Bot
+
+Headless bota můžete používat bez otevřeného browseru a s více účty naráz. K spuštění tohoto bota je potřeba [NodeJS](https://nodejs.org/en/)Jako první si stáhněte [Script](https://raw.githubusercontent.com/PlaceCZ/Bot/master/headlessBot.js), Poté v složce ve které jste si script stáhly otevřete terminál a spusťte komand `npm install`. Komand stáhne potřebné balíčky a potom bota zapněte pomocí `node headlessBot.js <token>`.
+
+## Získání tokenu
+<žádám o doplnění>
+v prohlížeči otevřít nástroje pro vývojáře, přepnout na tabulku síť,  reloadnout r/place, a v požadavku na /r/place tak v odpovedi najít "accessToken":<token>, token zkopírovat a dát jako parametr do toho headless bota
