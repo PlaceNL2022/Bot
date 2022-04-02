@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Token Printer
 // @namespace    https://github.com/fuho/Bot
-// @version      1
+// @version      2
 // @description  Prints the reddit token
 // @author       Wavelink
-// @match        https://www.reddit.com/r/place/
+// @match        https://www.reddit.com/r/place/*
+// @match        https://new.reddit.com/r/place/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=reddit.com
 // @updateURL    https://github.com/PlaceCZ/Bot/raw/master/tampermonkey/print_token.user.js
 // @downloadURL  https://github.com/PlaceCZ/Bot/raw/master/tampermonkey/print_token.user.js
