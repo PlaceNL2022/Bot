@@ -70,6 +70,10 @@ order.sort(() => Math.random() - 0.5);
 
     connectSocket();
     attemptPlace();
+
+    setInterval(() => {
+        if (socket) socket.send(JSON.stringify({ type: 'ping' }));
+    }, 5000);
 })();
 
 function connectSocket() {

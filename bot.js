@@ -45,6 +45,10 @@ const COLOR_MAPPINGS = {
 (async function () {
 	connectSocket();
     attemptPlace();
+
+    setInterval(() => {
+        if (socket) socket.send(JSON.stringify({ type: 'ping' }));
+    }, 5000);
 })();
 
 function connectSocket() {
