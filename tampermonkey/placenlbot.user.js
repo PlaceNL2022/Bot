@@ -27,6 +27,8 @@ var currentPlaceCanvas = document.createElement('canvas');
 
 const BACKEND_URL = 'placecz.martinnemi.me'
 
+const ORDER = Array.from(Array(200_000).keys()).sort(() => Math.random() - 0.5);
+
 const COLOR_MAPPINGS = {
     '#BE0039': 1,
     '#FF4500': 2,
@@ -54,11 +56,6 @@ const COLOR_MAPPINGS = {
     '#FFFFFF': 31
 };
 
-var order = [];
-for (var i = 0; i < 200000; i++) {
-    order.push(i);
-}
-order.sort(() => Math.random() - 0.5);
 
 (async function () {
     GM_addStyle(GM_getResourceText('TOASTIFY_CSS'));
@@ -168,7 +165,7 @@ async function attemptPlace() {
     const rgbaOrder = currentOrderCtx.getImageData(0, 0, 2000, 1000).data;
     const rgbaCanvas = ctx.getImageData(0, 0, 2000, 1000).data;
 
-    for (const j of order) {
+    for (const j of ORDER) {
         for (var l = 0; l < 10; l++) {
 
             const i = (j * 10) + l;
