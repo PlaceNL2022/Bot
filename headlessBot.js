@@ -1,4 +1,4 @@
-const VERSION = 2;
+const VERSION = 3;
 import fetch from 'node-fetch';
 import getPixels from "get-pixels";
 import WebSocket from 'ws';
