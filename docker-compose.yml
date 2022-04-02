@@ -4,4 +4,4 @@ services:
   soldat:
     build: .
     environment:
-      - ACCESS_TOKEN=${ACCESS_TOKEN}
+      - ACCESS_TOKEN
