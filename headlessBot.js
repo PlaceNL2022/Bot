@@ -2,22 +2,23 @@ const VERSION = 2;
 import fetch from 'node-fetch';
 import getPixels from "get-pixels";
 import WebSocket from 'ws';
+import process from 'process';
 
 const args = process.argv.slice(2);
 
-if (args.length != 1) {
+if (args.length !== 1) {
     console.error("Chybí access token.")
     process.exit(1);
 }
 
-let accessToken = args[0]
+const accessToken = args[0]
 
-var socket;
-var hasOrders = false;
-var currentOrders;
+let socket;
+let hasOrders = false;
+let currentOrders;
 
-var order = [];
-for (var i = 0; i < 200000; i++) {
+const order = [];
+for (let i = 0; i < 200000; i++) {
     order.push(i);
 }
 order.sort(() => Math.random() - 0.5);
@@ -121,7 +122,7 @@ function checkVersion() {
 }
 
 function connectSocket() {
-    console.log('Připojiju se na PlaceCZ server...')
+    console.log('Připojuji se na PlaceCZ server...')
 
     socket = new WebSocket('wss://placecz.martinnemi.me/api/ws');
 
@@ -131,7 +132,7 @@ function connectSocket() {
     };
 
     socket.onmessage = async function (message) {
-        var data;
+        let data;
         try {
             data = JSON.parse(message.data);
         } catch (e) {
@@ -140,6 +141,7 @@ function connectSocket() {
 
         switch (data.type.toLowerCase()) {
             case 'map':
+                console.debug("data: %j", data)
                 console.log(`Nové příkazy načteny (důvod: ${data.reason ? data.reason : 'Připojeno k serveru'})`)
                 currentOrders = await getMapFromUrl(`https://placecz.martinnemi.me/maps/${data.data}`);
                 hasOrders = true;
@@ -162,7 +164,7 @@ async function attemptPlace() {
         setTimeout(attemptPlace, 2000);
         return;
     }
-    var currentMap;
+    let currentMap;
     try {
         currentMap = await getMapFromUrl(await getCurrentImageUrl('0'));
         currentMap = await getMapFromUrl(await getCurrentImageUrl('1'));

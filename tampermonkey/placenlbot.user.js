@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         PlaceNL Bot (Czech Edition)
 // @namespace    https://github.com/PlaceCZ/Bot
-// @version      12
-// @description  Bot pro PlaceNL, předelán do češtiny
+// @version      13
+// @description  Bot pro r/place, puvodem od NL, predelan pro CZ
 // @author       NoahvdAa, GravelCZ, MartinNemi03
 // @match        https://www.reddit.com/r/place/*
 // @match        https://new.reddit.com/r/place/*
@@ -18,14 +18,19 @@
 // Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
 // Překlad: Omlouváme se za chaotický kód, spěch a čistota nejdou vždy dohromady. ;)
 
-var socket;
-var hasOrders = false;
-var accessToken;
-var currentOrderCanvas = document.createElement('canvas');
-var currentOrderCtx = currentOrderCanvas.getContext('2d');
-var currentPlaceCanvas = document.createElement('canvas');
+const BACKEND_URL = 'placecz.martinnemi.me'
+const BACKEND_API_WS_URL = `wss://${BACKEND_URL}/api/ws`;
+const BACKEND_API_MAPS = `https://${BACKEND_URL}/maps`
 
-const BackendAddress = 'placecz.martinnemi.me'
+let socket;
+let hasOrders = false;
+let accessToken;
+let currentOrderCanvas = document.createElement('canvas');
+let currentOrderCtx = currentOrderCanvas.getContext('2d');
+let currentPlaceCanvas = document.createElement('canvas');
+
+
+const ORDER = Array.from(Array(200_000).keys()).sort(() => Math.random() - 0.5);
 
 const COLOR_MAPPINGS = {
     '#BE0039': 1,
@@ -54,11 +59,6 @@ const COLOR_MAPPINGS = {
     '#FFFFFF': 31
 };
 
-var order = [];
-for (var i = 0; i < 200000; i++) {
-    order.push(i);
-}
-order.sort(() => Math.random() - 0.5);
 
 (async function () {
     GM_addStyle(GM_getResourceText('TOASTIFY_CSS'));
@@ -83,8 +83,9 @@ order.sort(() => Math.random() - 0.5);
 
     connectSocket();
     attemptPlace();
+
     setInterval(() => {
-        if (socket) socket.send(JSON.stringify({ type: 'ping' }));
+        if (socket) socket.send(JSON.stringify({type: 'ping'}));
     }, 5000);
 })();
 
@@ -94,7 +95,7 @@ function connectSocket() {
         duration: 10000
     }).showToast();
 
-    socket = new WebSocket(`wss://${BackendAddress}/api/ws`);
+    socket = new WebSocket(BACKEND_API_WS_URL);
 
     const errorTimeout = setTimeout(() => {
         Toastify({
@@ -110,7 +111,7 @@ function connectSocket() {
             text: 'Připojeno na server PlaceCZ',
             duration: 10000
         }).showToast();
-        socket.send(JSON.stringify({ type: 'getmap' }));
+        socket.send(JSON.stringify({type: 'getmap'}));
     };
 
     socket.onmessage = async function (message) {
@@ -124,10 +125,10 @@ function connectSocket() {
         switch (data.type.toLowerCase()) {
             case 'map':
                 Toastify({
-                    text: `Nové rozkazy připraveny, duvod: ${data.reason ? data.reason : 'Připojte se na PlaceCZ'})`,
+                    text: `Nové rozkazy připraveny, duvod: ${data.reason ? data.reason : 'Připojeno se na PlaceCZ'})`,
                     duration: 10000
                 }).showToast();
-                currentOrderCtx = await getCanvasFromUrl(`https://${BackendAddress}/maps/${data.data}`, currentOrderCanvas);
+                currentOrderCtx = await getCanvasFromUrl(`${BACKEND_API_MAPS}/${data.data}`, currentOrderCanvas);
                 hasOrders = true;
                 break;
             default:
@@ -148,10 +149,10 @@ function connectSocket() {
 
 async function attemptPlace() {
     if (!hasOrders) {
-        setTimeout(attemptPlace, 2000); // probeer opnieuw in 2sec.
+        setTimeout(attemptPlace, 2000); // try again in 2sec.
         return;
     }
-    var ctx;
+    let ctx;
     try {
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0);
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0)
@@ -168,65 +169,71 @@ async function attemptPlace() {
     const rgbaOrder = currentOrderCtx.getImageData(0, 0, 2000, 1000).data;
     const rgbaCanvas = ctx.getImageData(0, 0, 2000, 1000).data;
 
-    for (const i of order) {
-        // negeer lege order pixels.
-        if (rgbaOrder[(i * 4) + 3] === 0) continue;
+    for (const j of ORDER) {
+        for (let l = 0; l < 10; l++) {
 
-        const hex = rgbToHex(rgbaOrder[(i * 4)], rgbaOrder[(i * 4) + 1], rgbaOrder[(i * 4) + 2]);
-        // Deze pixel klopt.
-        if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
+            const i = (j * 10) + l;
 
-        const x = i % 2000;
-        const y = Math.floor(i / 2000);
-        Toastify({
-            text: `Pokus o umístění pixelu na ${x}, ${y}...`,
-            duration: 10000
-        }).showToast();
+            // Ignore empty pixels.
+            if (rgbaOrder[(i * 4) + 3] === 0) continue;
 
-        const res = await place(x, y, COLOR_MAPPINGS[hex]);
-        const data = await res.json();
-        try {
-            if (data.errors) {
-                const error = data.errors[0];
-                const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
-                const nextPixelDate = new Date(nextPixel);
-                const delay = nextPixelDate.getTime() - Date.now();
-                Toastify({
-                    text: `Příliš brzo umístěný pixel. Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
-                    duration: delay
-                }).showToast();
-                setTimeout(attemptPlace, delay);
-            } else {
-                const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
-                const nextPixelDate = new Date(nextPixel);
-                const delay = nextPixelDate.getTime() - Date.now();
-                Toastify({
-                    text: `Pixel položen na ${x}, ${y}! Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
-                    duration: delay
-                }).showToast();
-                setTimeout(attemptPlace, delay);
-            }
-        } catch (e) {
-            console.warn('Chyba pří analýze', e);
+            const hex = rgbToHex(rgbaOrder[(i * 4)], rgbaOrder[(i * 4) + 1], rgbaOrder[(i * 4) + 2]);
+
+            // This pixel is correct.
+            if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
+
+            const x = i % 2000;
+            const y = Math.floor(i / 2000);
             Toastify({
-                text: `Chyba pří analýze: ${e}.`,
+                text: `Pokus o umístění pixelu na ${x}, ${y}...`,
                 duration: 10000
             }).showToast();
-            setTimeout(attemptPlace, 10000);
-        }
 
-        return;
+            const res = await place(x, y, COLOR_MAPPINGS[hex]);
+            const data = await res.json();
+            try {
+                if (data.errors) {
+                    const error = data.errors[0];
+                    const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
+                    const nextPixelDate = new Date(nextPixel);
+                    const delay = nextPixelDate.getTime() - Date.now();
+                    Toastify({
+                        text: `Příliš brzo umístěný pixel. Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
+                        duration: delay
+                    }).showToast();
+                    setTimeout(attemptPlace, delay);
+                } else {
+                    const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
+                    const nextPixelDate = new Date(nextPixel);
+                    const delay = nextPixelDate.getTime() - Date.now();
+                    Toastify({
+                        text: `Pixel položen na ${x}, ${y}! Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
+                        duration: delay
+                    }).showToast();
+                    setTimeout(attemptPlace, delay);
+                }
+            } catch (e) {
+                console.warn('Chyba pří analýze', e);
+                Toastify({
+                    text: `Chyba pří analýze: ${e}.`,
+                    duration: 10000
+                }).showToast();
+                setTimeout(attemptPlace, 10000);
+            }
+
+            return;
+        }
     }
 
     Toastify({
         text: `Všechny pixely jsou již na správném místě! Zkouším to znovu za 30 sekund...`,
         duration: 30000
     }).showToast();
-    setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
+    setTimeout(attemptPlace, 30000); // try again in 30sec.
 }
 
 function place(x, y, color) {
-    socket.send(JSON.stringify({ type: 'placepixel', x, y, color }));
+    socket.send(JSON.stringify({type: 'placepixel', x, y, color}));
     return fetch('https://gql-realtime-2.reddit.com/query', {
         method: 'POST',
         body: JSON.stringify({
@@ -261,13 +268,10 @@ async function getAccessToken() {
     const url = usingOldReddit ? 'https://new.reddit.com/r/place/' : 'https://www.reddit.com/r/place/';
     const response = await fetch(url);
     const responseText = await response.text();
-
-    // TODO: ew
     return responseText.split('\"accessToken\":\"')[1].split('"')[0];
 }
 
 async function getCurrentImageUrl(id = '0') {
-
     return new Promise((resolve, reject) => {
         const ws = new WebSocket('wss://gql-realtime-2.reddit.com/query', 'graphql-ws');
 
@@ -299,11 +303,9 @@ async function getCurrentImageUrl(id = '0') {
         };
 
         ws.onmessage = (message) => {
-            const { data } = message;
+            const {data} = message;
             const parsed = JSON.parse(data);
 
-            // TODO: ew
-            // Poznámka editora: ew indeed.
             if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
 
             ws.close();
@@ -312,13 +314,12 @@ async function getCurrentImageUrl(id = '0') {
 
         ws.onerror = reject;
     });
-
 }
 
 function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
     return new Promise((resolve, reject) => {
-        var ctx = canvas.getContext('2d');
-        var img = new Image();
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
             ctx.drawImage(img, x, y);
