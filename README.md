@@ -1,6 +1,6 @@
 # PlaceNL Bot
 
-De bot voor PlaceNL! Deze bot haalt elke paar minuten automatisch [orders](https://github.com/PlaceNL/Orders) op, om te voorkomen dat bots elkaar gaan tegenwerken.
+De bot voor PlaceNL! Deze bot verbindt met de [commando server](https://github.com/PlaceNL/Commando) en krijgt daar order van. De ordergeschiedenis kan je [hier](https://placenl.noahvdaa.me/) bekijken.
 
 ## Installatieinstructies
 
@@ -12,5 +12,4 @@ Voordat je begint, zorg dat je pixel wachttijd is verlopen!
 
 ## Nadelen van deze bot
 
-- Wanneer de bot een pixel plaatst, ziet het er voor jezelf uit alsof je nog steeds een pixel kunt plaatsen, terwijl de bot dit al voor je heeft gedaan (en je dus in de 5 minuten cooldown zit).
-- De bot gaat houdt nog geen rekening met een bestaande cooldown, en gaat er dus van uit dat wanneer je **r/place** opent je meteen een pixel kunt plaatsen. Het kan hierdoor dat je eerste pixel in het ergste geval 4 minuten en 59 seconden tijd verspilt.
+- Wanneer de bot een pixel plaatst, ziet het er voor jezelf uit alsof je nog steeds een pixel kunt plaatsen, terwijl de bot dit al voor je heeft gedaan (en je dus in de 5 minuten cooldown zit). De cooldown wordt daarom rechtsbovenin je scherm weergegeven.
