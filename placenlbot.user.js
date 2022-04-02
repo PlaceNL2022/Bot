@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot
 // @namespace    https://github.com/PlaceNL/Bot
-// @version      10
+// @version      11
 // @description  De bot voor PlaceNL!
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
@@ -232,7 +232,7 @@ function place(x, y, color) {
                             'y': y
                         },
                         'colorIndex': color,
-                        'canvasIndex': 0
+                        'canvasIndex': (x > 999 ? 1 : 0)
                     }
                 }
             },
