@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot (Czech Edition)
 // @namespace    https://github.com/PlaceCZ/Bot
-// @version      8
+// @version      9
 // @description  Bot pro PlaceNL, předelán do češtiny
 // @author       NoahvdAa, GravelCZ, MartinNemi03
 // @match        https://www.reddit.com/r/place/*
@@ -28,17 +28,25 @@ var currentPlaceCanvas = document.createElement('canvas');
 const BackendAddress = 'placecz.martinnemi.me'
 
 const COLOR_MAPPINGS = {
+    '#BE0039': 1,
     '#FF4500': 2,
     '#FFA800': 3,
     '#FFD635': 4,
     '#00A368': 6,
+    '#00CC78': 7,
     '#7EED56': 8,
+    '#00756F': 9,
+    '#009EAA': 10,
     '#2450A4': 12,
     '#3690EA': 13,
     '#51E9F4': 14,
+    '#493AC1': 15,
+    '#6A5CFF': 16,
     '#811E9F': 18,
     '#B44AC0': 19,
+    '#FF3881': 22,
     '#FF99AA': 23,
+    '#6D482F': 24,
     '#9C6926': 25,
     '#000000': 27,
     '#898D90': 29,
@@ -47,18 +55,20 @@ const COLOR_MAPPINGS = {
 };
 
 var order = [];
-for (var i = 0; i < 1000000; i++) {
+for (var i = 0; i < 200000; i++) {
     order.push(i);
 }
 order.sort(() => Math.random() - 0.5);
 
 (async function () {
     GM_addStyle(GM_getResourceText('TOASTIFY_CSS'));
-    currentOrderCanvas.width = 1000;
+    currentOrderCanvas.width = 2000;
     currentOrderCanvas.height = 1000;
+    currentOrderCanvas.style.display = 'none';
     currentOrderCanvas = document.body.appendChild(currentOrderCanvas);
-    currentPlaceCanvas.width = 1000;
+    currentPlaceCanvas.width = 2000;
     currentPlaceCanvas.height = 1000;
+    currentPlaceCanvas.style.display = 'none';
     currentPlaceCanvas = document.body.appendChild(currentPlaceCanvas);
 
     Toastify({
@@ -92,9 +102,7 @@ function connectSocket() {
             duration: 10000
         }).showToast();
         console.error('Chyba při pokusu o připojení na PlaceCZ server')
-    }
-        
-    , 2000)
+    }, 2000)
 
     socket.onopen = function () {
         clearTimeout(errorTimeout);
@@ -145,20 +153,20 @@ async function attemptPlace() {
     }
     var ctx;
     try {
-        const canvasUrl = await getCurrentImageUrl();
-        ctx = await getCanvasFromUrl(canvasUrl, currentPlaceCanvas);
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0);
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0)
     } catch (e) {
         console.warn('Chyba při načítání mapy: ', e);
         Toastify({
-            text: 'Chyba při načítání mapy, zkuste znovu za 15 sekund',
-            duration: 15000
+            text: 'Chyba při načítání mapy, zkuste znovu za 10 sekund',
+            duration: 10000
         }).showToast();
-        setTimeout(attemptPlace, 15000); // probeer opnieuw in 15sec.
+        setTimeout(attemptPlace, 10000);
         return;
     }
 
-    const rgbaOrder = currentOrderCtx.getImageData(0, 0, 1000, 1000).data;
-    const rgbaCanvas = ctx.getImageData(0, 0, 1000, 1000).data;
+    const rgbaOrder = currentOrderCtx.getImageData(0, 0, 2000, 1000).data;
+    const rgbaCanvas = ctx.getImageData(0, 0, 2000, 1000).data;
 
     for (const i of order) {
         // negeer lege order pixels.
@@ -168,8 +176,8 @@ async function attemptPlace() {
         // Deze pixel klopt.
         if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
 
-        const x = i % 1000;
-        const y = Math.floor(i / 1000);
+        const x = i % 2000;
+        const y = Math.floor(i / 2000);
         Toastify({
             text: `Pokus o umístění pixelu na ${x}, ${y}...`,
             duration: 10000
@@ -258,7 +266,7 @@ async function getAccessToken() {
     return responseText.split('\"accessToken\":\"')[1].split('"')[0];
 }
 
-async function getCurrentImageUrl() {
+async function getCurrentImageUrl(id = '0') {
 
     return new Promise((resolve, reject) => {
         const ws = new WebSocket('wss://gql-realtime-2.reddit.com/query', 'graphql-ws');
@@ -279,7 +287,7 @@ async function getCurrentImageUrl() {
                             'channel': {
                                 'teamOwner': 'AFD2022',
                                 'category': 'CANVAS',
-                                'tag': '0'
+                                'tag': id
                             }
                         }
                     },
@@ -307,13 +315,13 @@ async function getCurrentImageUrl() {
 
 }
 
-function getCanvasFromUrl(url, canvas) {
+function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
     return new Promise((resolve, reject) => {
         var ctx = canvas.getContext('2d');
         var img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
-            ctx.drawImage(img, 0, 0);
+            ctx.drawImage(img, x, y);
             resolve(ctx);
         };
         img.onerror = reject;
