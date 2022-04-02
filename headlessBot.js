@@ -166,8 +166,13 @@ async function attemptPlace() {
     }
     let currentMap;
     try {
-        currentMap = await getMapFromUrl(await getCurrentImageUrl('0'));
-        currentMap = await getMapFromUrl(await getCurrentImageUrl('1'));
+	var canvas1 = await getCurrentImageUrl('0');
+        var canvas2 = await getCurrentImageUrl('1');
+        var mapCanvas1 = await getMapFromUrl(canvas1);
+        var mapCanvas2 = await getMapFromUrl(canvas2);
+        currentMap = new Uint8Array(mapCanvas1.data.length + mapCanvas2.data.length);
+        currentMap.set(mapCanvas1.data);
+        currentMap.set(mapCanvas2.data,mapCanvas1.data.length);
     } catch (e) {
         console.warn('Chyba při načítání momentálního canvasu: ', e);
         setTimeout(attemptPlace, 15000);
@@ -175,7 +180,7 @@ async function attemptPlace() {
     }
 
     const rgbaOrder = currentOrders.data;
-    const rgbaCanvas = currentMap.data;
+    const rgbaCanvas = currentMap;
 
     for (const i of order) {
         if (rgbaOrder[(i * 4) + 3] === 0) continue;
@@ -184,7 +189,7 @@ async function attemptPlace() {
         if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) {
           continue;
         }
-        const x = i % 1000;
+        const x = i % 2000;
         const y = Math.floor(i / 1000);
         console.log(`Pokud o položení pixelu na ${x}, ${y}...`)
 
