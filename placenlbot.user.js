@@ -319,15 +319,23 @@ async function getCurrentImageUrl(id = '0') {
 
 function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
     return new Promise((resolve, reject) => {
-        var ctx = canvas.getContext('2d');
-        var img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-            ctx.drawImage(img, x, y);
-            resolve(ctx);
+        let loadImage = ctx => {
+            var img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                ctx.drawImage(img, x, y);
+                resolve(ctx);
+            };
+            img.onerror = () => {
+                Toastify({
+                    text: 'Fout bij ophalen map. Opnieuw proberen in 3 sec...',
+                    duration: 3000
+                }).showToast();
+                setTimeout(() => loadImage(ctx), 3000);
+            };
+            img.src = url;
         };
-        img.onerror = reject;
-        img.src = url;
+        loadImage(canvas.getContext('2d'));
     });
 }
 
