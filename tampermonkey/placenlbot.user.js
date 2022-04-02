@@ -25,7 +25,7 @@ var currentOrderCanvas = document.createElement('canvas');
 var currentOrderCtx = currentOrderCanvas.getContext('2d');
 var currentPlaceCanvas = document.createElement('canvas');
 
-const BackendAddress = 'placecz.martinnemi.me'
+const BACKEND_URL = 'placecz.martinnemi.me'
 
 const COLOR_MAPPINGS = {
     '#BE0039': 1,
@@ -94,7 +94,7 @@ function connectSocket() {
         duration: 10000
     }).showToast();
 
-    socket = new WebSocket(`wss://${BackendAddress}/api/ws`);
+    socket = new WebSocket(`wss://${BACKEND_URL}/api/ws`);
 
     const errorTimeout = setTimeout(() => {
         Toastify({
@@ -127,7 +127,7 @@ function connectSocket() {
                     text: `Nové rozkazy připraveny, duvod: ${data.reason ? data.reason : 'Připojte se na PlaceCZ'})`,
                     duration: 10000
                 }).showToast();
-                currentOrderCtx = await getCanvasFromUrl(`https://${BackendAddress}/maps/${data.data}`, currentOrderCanvas);
+                currentOrderCtx = await getCanvasFromUrl(`https://${BACKEND_URL}/maps/${data.data}`, currentOrderCanvas);
                 hasOrders = true;
                 break;
             default:
