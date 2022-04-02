@@ -262,13 +262,16 @@ async function getCurrentImageUrl(id = '0') {
 function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
     return new Promise((resolve, reject) => {
         const ctx = canvas.getContext('2d');
-        loadImage(url).then(img => {
-            ctx.drawImage(img, x, y);
-            resolve(ctx);
-        }).catch(() => {
-            console.log('Fout bij ophalen map. Opnieuw proberen in 3 sec...');
-            setTimeout(() => loadImage(ctx), 3000);
-        })
+        const load = () => {
+            loadImage(url).then(img => {
+                ctx.drawImage(img, x, y);
+                resolve(ctx);
+            }).catch(() => {
+                console.log('Fout bij ophalen map. Opnieuw proberen in 3 sec...');
+                setTimeout(() => load(), 3000);
+            })
+        };
+        load();
     });
 }
 
