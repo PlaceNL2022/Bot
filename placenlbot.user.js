@@ -94,6 +94,7 @@ function connectSocket() {
     , 2000)
 
     socket.onopen = function () {
+        clearTimeout(errorTimeout);
         Toastify({
             text: 'Připojeno na server PlaceCZ',
             duration: 10000
