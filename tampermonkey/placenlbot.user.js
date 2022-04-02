@@ -18,14 +18,17 @@
 // Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
 // Překlad: Omlouváme se za chaotický kód, spěch a čistota nejdou vždy dohromady. ;)
 
-var socket;
-var hasOrders = false;
-var accessToken;
-var currentOrderCanvas = document.createElement('canvas');
-var currentOrderCtx = currentOrderCanvas.getContext('2d');
-var currentPlaceCanvas = document.createElement('canvas');
-
 const BACKEND_URL = 'placecz.martinnemi.me'
+const BACKEND_API_WS_URL = `wss://${BACKEND_URL}/api/ws`;
+const BACKEND_API_MAPS = `https://${BACKEND_URL}/maps`
+
+let socket;
+let hasOrders = false;
+let accessToken;
+let currentOrderCanvas = document.createElement('canvas');
+let currentOrderCtx = currentOrderCanvas.getContext('2d');
+let currentPlaceCanvas = document.createElement('canvas');
+
 
 const ORDER = Array.from(Array(200_000).keys()).sort(() => Math.random() - 0.5);
 
@@ -92,7 +95,7 @@ function connectSocket() {
         duration: 10000
     }).showToast();
 
-    socket = new WebSocket(`wss://${BACKEND_URL}/api/ws`);
+    socket = new WebSocket(BACKEND_API_WS_URL);
 
     const errorTimeout = setTimeout(() => {
         Toastify({
@@ -125,7 +128,7 @@ function connectSocket() {
                     text: `Nové rozkazy připraveny, duvod: ${data.reason ? data.reason : 'Připojte se na PlaceCZ'})`,
                     duration: 10000
                 }).showToast();
-                currentOrderCtx = await getCanvasFromUrl(`https://${BACKEND_URL}/maps/${data.data}`, currentOrderCanvas);
+                currentOrderCtx = await getCanvasFromUrl(`${BACKEND_API_MAPS}/${data.data}`, currentOrderCanvas);
                 hasOrders = true;
                 break;
             default:
@@ -149,7 +152,7 @@ async function attemptPlace() {
         setTimeout(attemptPlace, 2000); // try again in 2sec.
         return;
     }
-    var ctx;
+    let ctx;
     try {
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0);
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0)
@@ -167,7 +170,7 @@ async function attemptPlace() {
     const rgbaCanvas = ctx.getImageData(0, 0, 2000, 1000).data;
 
     for (const j of ORDER) {
-        for (var l = 0; l < 10; l++) {
+        for (let l = 0; l < 10; l++) {
 
             const i = (j * 10) + l;
 
@@ -315,8 +318,8 @@ async function getCurrentImageUrl(id = '0') {
 
 function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
     return new Promise((resolve, reject) => {
-        var ctx = canvas.getContext('2d');
-        var img = new Image();
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
             ctx.drawImage(img, x, y);
