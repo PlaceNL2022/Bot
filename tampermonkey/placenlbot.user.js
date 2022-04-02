@@ -168,54 +168,60 @@ async function attemptPlace() {
     const rgbaOrder = currentOrderCtx.getImageData(0, 0, 2000, 1000).data;
     const rgbaCanvas = ctx.getImageData(0, 0, 2000, 1000).data;
 
-    for (const i of order) {
-        // negeer lege order pixels.
-        if (rgbaOrder[(i * 4) + 3] === 0) continue;
+    for (const j of order) {
+        for (var l = 0; l < 10; l++) {
 
-        const hex = rgbToHex(rgbaOrder[(i * 4)], rgbaOrder[(i * 4) + 1], rgbaOrder[(i * 4) + 2]);
-        // Deze pixel klopt.
-        if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
+            const i = (j * 10) + l;
 
-        const x = i % 2000;
-        const y = Math.floor(i / 2000);
-        Toastify({
-            text: `Pokus o umístění pixelu na ${x}, ${y}...`,
-            duration: 10000
-        }).showToast();
+            // Ignore empty pixels.
+            if (rgbaOrder[(i * 4) + 3] === 0) continue;
 
-        const res = await place(x, y, COLOR_MAPPINGS[hex]);
-        const data = await res.json();
-        try {
-            if (data.errors) {
-                const error = data.errors[0];
-                const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
-                const nextPixelDate = new Date(nextPixel);
-                const delay = nextPixelDate.getTime() - Date.now();
-                Toastify({
-                    text: `Příliš brzo umístěný pixel. Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
-                    duration: delay
-                }).showToast();
-                setTimeout(attemptPlace, delay);
-            } else {
-                const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
-                const nextPixelDate = new Date(nextPixel);
-                const delay = nextPixelDate.getTime() - Date.now();
-                Toastify({
-                    text: `Pixel položen na ${x}, ${y}! Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
-                    duration: delay
-                }).showToast();
-                setTimeout(attemptPlace, delay);
-            }
-        } catch (e) {
-            console.warn('Chyba pří analýze', e);
+            const hex = rgbToHex(rgbaOrder[(i * 4)], rgbaOrder[(i * 4) + 1], rgbaOrder[(i * 4) + 2]);
+
+            // This pixel is correct.
+            if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
+
+            const x = i % 2000;
+            const y = Math.floor(i / 2000);
             Toastify({
-                text: `Chyba pří analýze: ${e}.`,
+                text: `Pokus o umístění pixelu na ${x}, ${y}...`,
                 duration: 10000
             }).showToast();
-            setTimeout(attemptPlace, 10000);
-        }
 
-        return;
+            const res = await place(x, y, COLOR_MAPPINGS[hex]);
+            const data = await res.json();
+            try {
+                if (data.errors) {
+                    const error = data.errors[0];
+                    const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
+                    const nextPixelDate = new Date(nextPixel);
+                    const delay = nextPixelDate.getTime() - Date.now();
+                    Toastify({
+                        text: `Příliš brzo umístěný pixel. Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
+                        duration: delay
+                    }).showToast();
+                    setTimeout(attemptPlace, delay);
+                } else {
+                    const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
+                    const nextPixelDate = new Date(nextPixel);
+                    const delay = nextPixelDate.getTime() - Date.now();
+                    Toastify({
+                        text: `Pixel položen na ${x}, ${y}! Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
+                        duration: delay
+                    }).showToast();
+                    setTimeout(attemptPlace, delay);
+                }
+            } catch (e) {
+                console.warn('Chyba pří analýze', e);
+                Toastify({
+                    text: `Chyba pří analýze: ${e}.`,
+                    duration: 10000
+                }).showToast();
+                setTimeout(attemptPlace, 10000);
+            }
+
+            return;
+        }
     }
 
     Toastify({
