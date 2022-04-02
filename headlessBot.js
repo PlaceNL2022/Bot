@@ -7,12 +7,12 @@ import * as fs from 'fs'
 
 const args = process.argv.slice(2);
 
-if (args.length !== 1) {
+if (args.length != 1 && !process.env.ACCESS_TOKEN) {
     console.error("Chybí access token.")
     process.exit(1);
 }
 
-const accessToken = args[0]
+let accessToken = process.env.ACCESS_TOKEN || args[0];
 
 let socket;
 let hasOrders = false;
