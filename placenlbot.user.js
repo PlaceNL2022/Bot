@@ -244,6 +244,7 @@ async function getAccessToken() {
 }
 
 async function getCurrentImageUrl() {
+
     return new Promise((resolve, reject) => {
         const ws = new WebSocket('wss://gql-realtime-2.reddit.com/query', 'graphql-ws');
 
@@ -287,6 +288,7 @@ async function getCurrentImageUrl() {
 
         ws.onerror = reject;
     });
+
 }
 
 function getCanvasFromUrl(url, canvas) {

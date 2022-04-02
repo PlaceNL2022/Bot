@@ -1,15 +1,18 @@
-# PlaceNL Bot
+# PlaceNL Bot (Czech Edition)
 
-De bot voor PlaceNL! Deze bot verbindt met de [commando server](https://github.com/PlaceNL/Commando) en krijgt daar order van. De ordergeschiedenis kan je [hier](https://placenl.noahvdaa.me/) bekijken.
+Robot pro PlaceNL! Tento robot automaticky načítá objednávky každých pár minut, aby zabránil robotům pracovat proti sobě.
 
-## Installatieinstructies
 
-Voordat je begint, zorg dat je pixel wachttijd is verlopen!
+## Pokyny pro instalaci
 
-1. Installeer de [Tampermonkey](https://www.tampermonkey.net/) browserextensie.
-2. Klik op deze link: [https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js](https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js). Als het goed is zal Tampermonkey je moeten aanbieden om een userscript te installeren. Klik op **Install**.
-3. Herlaad je **r/place** tabblad. Als alles goed is gegaan, zie je "Accesstoken ophalen..." rechtsbovenin je scherm. De bot is nu actief, en zal je via deze meldingen rechtsbovenin je scherm op de hoogte houden van wat 'ie doet.
+Než začnete, ujistěte se, že vaše pixelová latence vypršela!
 
-## Nadelen van deze bot
+1. Nainstalujte si rozšíření prohlížeče Tampermonkey.
+2. Klikněte na tento odkaz: https://github.com/PlaceCZ/Bot/raw/master/placenlbot.user.js. Pokud vše půjde dobře, Tampermonkey by vám měl nabídnout instalaci uživatelského skriptu. Klikněte na **Instalovat**.
+3. Znovu načtěte stránku **r/place**. Pokud vše proběhlo v pořádku, v pravém horním rohu obrazovky se zobrazí „Získávání přístupového tokenu...“. Robot je nyní aktivní a bude vás informovat o tom, co dělá, prostřednictvím těchto oznámení v pravé horní části obrazovky.
 
-- Wanneer de bot een pixel plaatst, ziet het er voor jezelf uit alsof je nog steeds een pixel kunt plaatsen, terwijl de bot dit al voor je heeft gedaan (en je dus in de 5 minuten cooldown zit). De cooldown wordt daarom rechtsbovenin je scherm weergegeven.
+## Nevýhody tohoto bota
+
+Když bot umístí pixel, zdá se vám, že stále můžete umístit pixel, když to bot již udělal za vás (takže jste v 5minutovém cooldownu).
+Bot ještě nezohledňuje existující cooldown, takže předpokládá, že když otevřete **r/place**, můžete okamžitě umístit pixel. V nejhorším případě by váš první pixel mohl ztratit 4 minuty a 59 sekund času.
+
