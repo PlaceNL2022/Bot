@@ -114,8 +114,8 @@ async function attemptPlace() {
         // Deze pixel klopt.
         if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
 
-        const x = i % 1000;
-        const y = Math.floor(i / 1000);
+        const x = i % 2000;
+        const y = Math.floor(i / 2000);
         console.log(`Pixel proberen te plaatsen op ${x}, ${y}...`)
 
         const res = await place(x, y, COLOR_MAPPINGS[hex]);
