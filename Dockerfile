@@ -6,7 +6,7 @@ RUN apk add --update --no-cache python3 build-base cairo-dev jpeg-dev pango-dev 
 
 COPY package*.json ./
 
-RUN npm ci
+RUN npm install
 
 COPY bot.js ./
 
