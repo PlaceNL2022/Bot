@@ -2,9 +2,8 @@ import fetch from 'node-fetch';
 import WebSocket from 'ws';
 import * as Canvas from 'canvas';
 
-const Image = Canvas.default.Image;
-
 const createCanvas = Canvas.default.createCanvas;
+const loadImage = Canvas.default.loadImage;
 
 const args = process.argv.slice(2);
 
@@ -98,6 +97,7 @@ function connectSocket() {
         try {
             data = JSON.parse(message.data);
         } catch (e) {
+            console.log('Fout bij parsen JSON: ' + message.data);
             return;
         }
 
@@ -146,7 +146,6 @@ async function attemptPlace() {
         return;
     }
 
-    const percentComplete = 100 - Math.ceil(work.length * 100 / order.length);
     const idx = Math.floor(Math.random() * work.length);
     const i = work[idx];
     const x = i % 2000;
@@ -250,37 +249,26 @@ async function getCurrentImageUrl(id = '0') {
         ws.onmessage = (message) => {
             const { data } = message;
             const parsed = JSON.parse(data);
-
-            // TODO: ew
             if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
 
             ws.close();
             resolve(parsed.payload.data.subscribe.data.name + `?noCache=${Date.now() * Math.random()}`);
         }
 
-        ws.onerror = (error) => {
-            console.error("is broken here")
-            reject(error);
-        };
+        ws.onerror = reject;
     });
 }
 
 function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
     return new Promise((resolve, reject) => {
-        let loadImage = ctx => {
-            var img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => {
-                ctx.drawImage(img, x, y);
-                resolve(ctx);
-            };
-            img.onerror = () => {
-                console.log('Fout bij ophalen map. Opnieuw proberen in 3 sec...');
-                setTimeout(() => loadImage(ctx), 3000);
-            };
-            img.src = url;
-        };
-        loadImage(canvas.getContext('2d'));
+        const ctx = canvas.getContext('2d');
+        loadImage(url).then(img => {
+            ctx.drawImage(img, x, y);
+            resolve(ctx);
+        }).catch(() => {
+            console.log('Fout bij ophalen map. Opnieuw proberen in 3 sec...');
+            setTimeout(() => loadImage(ctx), 3000);
+        })
     });
 }
 
