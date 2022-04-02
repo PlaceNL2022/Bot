@@ -1,21 +1,21 @@
 // ==UserScript==
-// @name         PlaceNL Bot
-// @namespace    https://github.com/PlaceNL/Bot
+// @name         PlaceTUD Bot
+// @namespace    https://github.com/PlaceTUD/Soldat
 // @version      12
-// @description  De bot voor PlaceNL!
-// @author       NoahvdAa
+// @description  Der PlaceTUD Bot für die koolsten Kids der TU Darmstadt!
+// @author       Ich und der andere
 // @match        https://www.reddit.com/r/place/*
 // @match        https://new.reddit.com/r/place/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=reddit.com
 // @require	     https://cdn.jsdelivr.net/npm/toastify-js
 // @resource     TOASTIFY_CSS https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css
-// @updateURL    https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js
-// @downloadURL  https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js
+// @updateURL    https://github.com/PlaceTUD/Soldat/raw/master/placenlbot.user.js
+// @downloadURL  https://github.com/PlaceTUD/Soldat/raw/master/placenlbot.user.js
 // @grant        GM_getResourceText
 // @grant        GM_addStyle
 // ==/UserScript==
 
-// Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
+// Sorry for the messy code, hurry and clean does not always go together
 
 var socket;
 var hasOrders = false;
@@ -69,12 +69,12 @@ order.sort(() => Math.random() - 0.5);
     currentPlaceCanvas = document.body.appendChild(currentPlaceCanvas);
 
     Toastify({
-        text: 'Accesstoken ophalen...',
+        text: 'Getting access token...',
         duration: 10000
     }).showToast();
     accessToken = await getAccessToken();
     Toastify({
-        text: 'Accesstoken opgehaald!',
+        text: 'Got access token!',
         duration: 10000
     }).showToast();
 
@@ -88,15 +88,15 @@ order.sort(() => Math.random() - 0.5);
 
 function connectSocket() {
     Toastify({
-        text: 'Verbinden met PlaceNL server...',
+        text: 'Connectring with PlaceTUD server...',
         duration: 10000
     }).showToast();
 
-    socket = new WebSocket('wss://placenl.noahvdaa.me/api/ws');
+    socket = new WebSocket('wss://placenl.noahvdaa.me/api/ws'); // TODO: UWU change url
 
     socket.onopen = function () {
         Toastify({
-            text: 'Verbonden met PlaceNL server!',
+            text: 'Connected with PlaceTUD server!',
             duration: 10000
         }).showToast();
         socket.send(JSON.stringify({ type: 'getmap' }));
@@ -113,10 +113,10 @@ function connectSocket() {
         switch (data.type.toLowerCase()) {
             case 'map':
                 Toastify({
-                    text: `Nieuwe map geladen (reden: ${data.reason ? data.reason : 'verbonden met server'})`,
+                    text: `New map loaded (reason: ${data.reason ? data.reason : 'connected to server'})`,
                     duration: 10000
                 }).showToast();
-                currentOrderCtx = await getCanvasFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`, currentOrderCanvas);
+                currentOrderCtx = await getCanvasFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`, currentOrderCanvas); // TODO: Change uwurl
                 hasOrders = true;
                 break;
             default:
@@ -126,10 +126,10 @@ function connectSocket() {
 
     socket.onclose = function (e) {
         Toastify({
-            text: `PlaceNL server heeft de verbinding verbroken: ${e.reason}`,
+            text: `PlaceTUD Server has broken the connection: ${e.reason}`,
             duration: 10000
         }).showToast();
-        console.error('Socketfout: ', e.reason);
+        console.error('Socket error: ', e.reason);
         socket.close();
         setTimeout(connectSocket, 1000);
     };
@@ -145,12 +145,12 @@ async function attemptPlace() {
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0);
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0)
     } catch (e) {
-        console.warn('Fout bij ophalen map: ', e);
+        console.warn('Error loding map: ', e);
         Toastify({
-            text: 'Fout bij ophalen map. Opnieuw proberen in 10 sec...',
+            text: 'Error loding map. Trying again in 10 seconds',
             duration: 10000
         }).showToast();
-        setTimeout(attemptPlace, 10000); // probeer opnieuw in 10sec.
+        setTimeout(attemptPlace, 10000);
         return;
     }
 
@@ -160,17 +160,17 @@ async function attemptPlace() {
     for (const j of order) {
         for (var l = 0; l < 10; l++) {
             const i = (j * 10) + l;
-            // negeer lege order pixels.
+            // Ignore empty order pixels
             if (rgbaOrder[(i * 4) + 3] === 0) continue;
 
             const hex = rgbToHex(rgbaOrder[(i * 4)], rgbaOrder[(i * 4) + 1], rgbaOrder[(i * 4) + 2]);
-            // Deze pixel klopt.
+            // This pixel is correct
             if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
 
             const x = i % 2000;
             const y = Math.floor(i / 2000);
             Toastify({
-                text: `Pixel proberen te plaatsen op ${x}, ${y}...`,
+                text: `Pixel try to place on ${x}, ${y}...`,
                 duration: 10000
             }).showToast();
 
@@ -183,7 +183,7 @@ async function attemptPlace() {
                     const nextPixelDate = new Date(nextPixel);
                     const delay = nextPixelDate.getTime() - Date.now();
                     Toastify({
-                        text: `Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`,
+                        text: `Pixel placed too quickly! Next pixel is set to ${nextPixelDate.toLocaleTimeString()}.`,
                         duration: delay
                     }).showToast();
                     setTimeout(attemptPlace, delay);
@@ -192,15 +192,15 @@ async function attemptPlace() {
                     const nextPixelDate = new Date(nextPixel);
                     const delay = nextPixelDate.getTime() - Date.now();
                     Toastify({
-                        text: `Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`,
+                        text: `Pixel placed on ${x}, ${y}! Next pixel is set to ${nextPixelDate.toLocaleTimeString()}.`, 
                         duration: delay
                     }).showToast();
                     setTimeout(attemptPlace, delay);
                 }
             } catch (e) {
-                console.warn('Fout bij response analyseren', e);
+                console.warn('Error reading responce', e);
                 Toastify({
-                    text: `Fout bij response analyseren: ${e}.`,
+                    text: `Error reading responce: ${e}.`,
                     duration: 10000
                 }).showToast();
                 setTimeout(attemptPlace, 10000);
@@ -211,7 +211,7 @@ async function attemptPlace() {
     }
 
     Toastify({
-        text: `Alle pixels staan al op de goede plaats! Opnieuw proberen in 30 sec...`,
+        text: `All pixels are already in the right place! Try again in 30 seconds ...`,
         duration: 30000
     }).showToast();
     setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
