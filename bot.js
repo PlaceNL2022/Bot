@@ -1,7 +1,10 @@
 import fetch from 'node-fetch';
-import getPixels from 'get-pixels';
 import WebSocket from 'ws';
-import ndarray from 'ndarray';
+import * as Canvas from 'canvas';
+
+const Image = Canvas.default.Image;
+
+const createCanvas = Canvas.default.createCanvas;
 
 const args = process.argv.slice(2);
 
@@ -11,39 +14,71 @@ if (args.length != 1 && !process.env.ACCESS_TOKEN) {
 }
 
 let accessToken = process.env.ACCESS_TOKEN || args[0];
+console.log(accessToken)
 
 var socket;
-var hasOrders = false;
-var currentOrders;
+var order = undefined;
 
-var order = [];
-for (var i = 0; i < 1000000; i++) {
-    order.push(i);
-}
-order.sort(() => Math.random() - 0.5);
-
+var currentOrderCanvas = createCanvas(2000, 1000);
+var currentOrderCtx = currentOrderCanvas.getContext('2d');
+var currentPlaceCanvas = createCanvas(2000, 1000);
 
 const COLOR_MAPPINGS = {
-	'#FF4500': 2,
-	'#FFA800': 3,
-	'#FFD635': 4,
-	'#00A368': 6,
-	'#7EED56': 8,
-	'#2450A4': 12,
-	'#3690EA': 13,
-	'#51E9F4': 14,
-	'#811E9F': 18,
-	'#B44AC0': 19,
-	'#FF99AA': 23,
-	'#9C6926': 25,
-	'#000000': 27,
-	'#898D90': 29,
-	'#D4D7D9': 30,
-	'#FFFFFF': 31
+    '#BE0039': 1,
+    '#FF4500': 2,
+    '#FFA800': 3,
+    '#FFD635': 4,
+    '#00A368': 6,
+    '#00CC78': 7,
+    '#7EED56': 8,
+    '#00756F': 9,
+    '#009EAA': 10,
+    '#2450A4': 12,
+    '#3690EA': 13,
+    '#51E9F4': 14,
+    '#493AC1': 15,
+    '#6A5CFF': 16,
+    '#811E9F': 18,
+    '#B44AC0': 19,
+    '#FF3881': 22,
+    '#FF99AA': 23,
+    '#6D482F': 24,
+    '#9C6926': 25,
+    '#000000': 27,
+    '#898D90': 29,
+    '#D4D7D9': 30,
+    '#FFFFFF': 31
+};
+
+let getRealWork = rgbaOrder => {
+    let order = [];
+    for (var i = 0; i < 2000000; i++) {
+        if (rgbaOrder[(i * 4) + 3] !== 0) {
+            order.push(i);
+        }
+    }
+    return order;
+};
+
+let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
+    let pendingWork = [];
+    for (const i of work) {
+        if (rgbaOrderToHex(i, rgbaOrder) !== rgbaOrderToHex(i, rgbaCanvas)) {
+            pendingWork.push(i);
+        }
+    }
+    return pendingWork;
 };
 
 (async function () {
-	connectSocket();
+    currentOrderCanvas.width = 2000;
+    currentOrderCanvas.height = 1000;
+    // currentOrderCanvas = document.body.appendChild(currentOrderCanvas);
+    currentPlaceCanvas.width = 2000;
+    currentPlaceCanvas.height = 1000;
+    // currentPlaceCanvas = document.body.appendChild(currentPlaceCanvas);
+
+    connectSocket();
     attemptPlace();
 
     setInterval(() => {
@@ -52,12 +87,12 @@ const COLOR_MAPPINGS = {
 })();
 
 function connectSocket() {
-    console.log('Connectring with PlaceTUD server...')
+    console.log('Connectring with PlaceTUD server...');
 
     socket = new WebSocket('wss://placetud.yanick.gay/api/ws');
 
     socket.onopen = function () {
-        console.log('Connected with PlaceTUD server!')
+        console.log('Connected with PlaceTUD server!');
         socket.send(JSON.stringify({ type: 'getmap' }));
     };
 
@@ -71,9 +106,9 @@ function connectSocket() {
 
         switch (data.type.toLowerCase()) {
             case 'map':
-                console.log(`New map loaded (reason: ${data.reason ? data.reason : 'connected to server'})`)
-                currentOrders = await getMapFromUrl(`https://placetud.yanick.gay/maps/${data.data}`);
-                hasOrders = true;
+                console.log(`New map loaded (reason: ${data.reason ? data.reason : 'connected to server'})`);
+                currentOrderCtx = await getCanvasFromUrl(`https://placetud.yanick.gay/maps/${data.data}`, currentOrderCanvas);
+                order = getRealWork(currentOrderCtx.getImageData(0, 0, 2000, 1000).data);
                 break;
             default:
                 break;
@@ -81,7 +116,7 @@ function connectSocket() {
     };
 
     socket.onclose = function (e) {
-        console.warn(`PlaceTUD Server has broken the connection: ${e.reason}`)
+        console.log(`PlaceTUD Server has broken the connection: ${e.reason}`);
         console.error('Socket error: ', e.reason);
         socket.close();
         setTimeout(connectSocket, 1000);
@@ -89,163 +124,172 @@ function connectSocket() {
 }
 
 async function attemptPlace() {
-    if (!hasOrders) {
-        setTimeout(attemptPlace, 2000);
+    if (order === undefined) {
+        setTimeout(attemptPlace, 2000); // probeer opnieuw in 2sec.
         return;
     }
-    var currentMap;
+    var ctx;
     try {
-        const canvasUrl = await getCurrentImageUrl();
-        currentMap = await getMapFromUrl(canvasUrl);
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0);
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0);
     } catch (e) {
-        console.warn('Error loding map: ', e);
-        console.log('Trying again in 10 seconds...');
-        setTimeout(attemptPlace, 15000);
+        console.warn('Error loading map: ', e);
+        console.log('Error loading map. Trying again in 10 seconds');
+        setTimeout(attemptPlace, 10000);
         return;
     }
 
-    const rgbaOrder = currentOrders.data;
-    const rgbaCanvas = currentMap.data;
+    const rgbaOrder = currentOrderCtx.getImageData(0, 0, 2000, 1000).data;
+    const rgbaCanvas = ctx.getImageData(0, 0, 2000, 1000).data;
+    const work = getPendingWork(order, rgbaOrder, rgbaCanvas);
 
-    for (const i of order) {
-        // Ignore empty order pixels
-        if (rgbaOrder[(i * 4) + 3] === 0) continue;
+    if (work.length === 0) {
+        console.log(`All pixels are already in the right place! Try again in 30 seconds ...`);
+        setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
+        return;
+    }
 
-        const hex = rgbToHex(rgbaOrder[(i * 4)], rgbaOrder[(i * 4) + 1], rgbaOrder[(i * 4) + 2]);
-        // This pixel is correct
-        if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
+    const percentComplete = 100 - Math.ceil(work.length * 100 / order.length);
+    const idx = Math.floor(Math.random() * work.length);
+    const i = work[idx];
+    const x = i % 2000;
+    const y = Math.floor(i / 2000);
+    const hex = rgbaOrderToHex(i, rgbaOrder);
 
-        const x = i % 2000;
-        const y = Math.floor(i / 2000);
-        console.log(`Pixel try to place on ${x}, ${y}...`)
+    console.log(`Pixel try to place on ${x}, ${y}...`);
 
-        const res = await place(x, y, COLOR_MAPPINGS[hex]);
-        const data = await res.json();
-        try {
-            if (data.errors) {
-                const error = data.errors[0];
-                const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
-                const nextPixelDate = new Date(nextPixel);
-                const delay = nextPixelDate.getTime() - Date.now();
-                console.log(`Pixel placed too quickly! Next pixel is set to ${nextPixelDate.toLocaleTimeString()}.`);
-                setTimeout(attemptPlace, delay);
-            } else {
-                const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
-                const nextPixelDate = new Date(nextPixel);
-                const delay = nextPixelDate.getTime() - Date.now();
-                console.log(`Pixel placed on ${x}, ${y}! Next pixel is set to ${nextPixelDate.toLocaleTimeString()}.`);
-                setTimeout(attemptPlace, delay);
-            }
-        } catch (e) {
-            console.warn('Error reading responce', e);
-            setTimeout(attemptPlace, 10000);
+    const res = await place(x, y, COLOR_MAPPINGS[hex]);
+    const data = await res.json();
+
+    try {
+        if (data.errors) {
+            const error = data.errors[0];
+            const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
+            const nextPixelDate = new Date(nextPixel);
+            const delay = nextPixelDate.getTime() - Date.now();
+            console.log(`Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`);
+            setTimeout(attemptPlace, delay);
+        } else {
+            const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
+            const nextPixelDate = new Date(nextPixel);
+            const delay = nextPixelDate.getTime() - Date.now();
+            console.log(`Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`);
+            setTimeout(attemptPlace, delay);
         }
-
-        return;
+    } catch (e) {
+        console.warn('Fout bij response analyseren', e);
+        console.log(`Fout bij response analyseren: ${e}.`);
+        setTimeout(attemptPlace, 10000);
     }
-
-    console.log(`All pixels are already in the right place! Try again in 30 seconds ...`)
-    setTimeout(attemptPlace, 30000);
 }
 
 function place(x, y, color) {
     socket.send(JSON.stringify({ type: 'placepixel', x, y, color }));
-    console.log('Placing pixel at (' + x + ', ' + y + ') with color: ' + color)
-	return fetch('https://gql-realtime-2.reddit.com/query', {
-		method: 'POST',
-		body: JSON.stringify({
-			'operationName': 'setPixel',
-			'variables': {
-				'input': {
-					'actionName': 'r/replace:set_pixel',
-					'PixelMessageData': {
-						'coordinate': {
-							'x': x,
-							'y': y
-						},
-						'colorIndex': color,
-						'canvasIndex': 0
-					}
-				}
-			},
-			'query': 'mutation setPixel($input: ActInput!) {\n  act(input: $input) {\n    data {\n      ... on BasicMessage {\n        id\n        data {\n          ... on GetUserCooldownResponseMessageData {\n            nextAvailablePixelTimestamp\n            __typename\n          }\n          ... on SetPixelResponseMessageData {\n            timestamp\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n'
-		}),
-		headers: {
-			'origin': 'https://hot-potato.reddit.com',
-			'referer': 'https://hot-potato.reddit.com/',
-			'apollographql-client-name': 'mona-lisa',
-			'Authorization': `Bearer ${accessToken}`,
-			'Content-Type': 'application/json'
-		}
-	});
-}
-
-async function getCurrentImageUrl() {
-	return new Promise((resolve, reject) => {
-		const ws = new WebSocket('wss://gql-realtime-2.reddit.com/query', 'graphql-ws', {
-        headers : {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0',
-            'Origin': 'https://hot-potato.reddit.com'
+    return fetch('https://gql-realtime-2.reddit.com/query', {
+        method: 'POST',
+        body: JSON.stringify({
+            'operationName': 'setPixel',
+            'variables': {
+                'input': {
+                    'actionName': 'r/replace:set_pixel',
+                    'PixelMessageData': {
+                        'coordinate': {
+                            'x': x % 1000,
+                            'y': y % 1000
+                        },
+                        'colorIndex': color,
+                        'canvasIndex': (x > 999 ? 1 : 0)
+                    }
+                }
+            },
+            'query': 'mutation setPixel($input: ActInput!) {\n  act(input: $input) {\n    data {\n      ... on BasicMessage {\n        id\n        data {\n          ... on GetUserCooldownResponseMessageData {\n            nextAvailablePixelTimestamp\n            __typename\n          }\n          ... on SetPixelResponseMessageData {\n            timestamp\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n'
+        }),
+        headers: {
+            'origin': 'https://hot-potato.reddit.com',
+            'referer': 'https://hot-potato.reddit.com/',
+            'apollographql-client-name': 'mona-lisa',
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
         }
-      });
-
-		ws.onopen = () => {
-			ws.send(JSON.stringify({
-				'type': 'connection_init',
-				'payload': {
-					'Authorization': `Bearer ${accessToken}`
-				}
-			}));
-
-			ws.send(JSON.stringify({
-				'id': '1',
-				'type': 'start',
-				'payload': {
-					'variables': {
-						'input': {
-							'channel': {
-								'teamOwner': 'AFD2022',
-								'category': 'CANVAS',
-								'tag': '0'
-							}
-						}
-					},
-					'extensions': {},
-					'operationName': 'replace',
-					'query': 'subscription replace($input: SubscribeInput!) {\n  subscribe(input: $input) {\n    id\n    ... on BasicMessage {\n      data {\n        __typename\n        ... on FullFrameMessageData {\n          __typename\n          name\n          timestamp\n        }\n      }\n      __typename\n    }\n    __typename\n  }\n}'
-				}
-			}));
-		};
-
-		ws.onmessage = (message) => {
-			const { data } = message;
-			const parsed = JSON.parse(data);
-
-			if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
-
-			ws.close();
-			resolve(parsed.payload.data.subscribe.data.name);
-		}
-
-
-		ws.onerror = reject;
-	});
+    });
 }
 
-function getMapFromUrl(url) {
+async function getCurrentImageUrl(id = '0') {
     return new Promise((resolve, reject) => {
-        getPixels(url, function(err, pixels) {
-            if(err) {
-                console.log('Bad image path')
-                reject()
-                return
+        const ws = new WebSocket('wss://gql-realtime-2.reddit.com/query', 'graphql-ws', {
+            headers : {
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0',
+                'Origin': 'https://hot-potato.reddit.com'
             }
-            console.log('got pixels', pixels.shape.slice())
-            resolve(pixels)
-        })
+        });
+
+        ws.onopen = () => {
+            ws.send(JSON.stringify({
+                'type': 'connection_init',
+                'payload': {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            }));
+            ws.send(JSON.stringify({
+                'id': '1',
+                'type': 'start',
+                'payload': {
+                    'variables': {
+                        'input': {
+                            'channel': {
+                                'teamOwner': 'AFD2022',
+                                'category': 'CANVAS',
+                                'tag': id
+                            }
+                        }
+                    },
+                    'extensions': {},
+                    'operationName': 'replace',
+                    'query': 'subscription replace($input: SubscribeInput!) {\n  subscribe(input: $input) {\n    id\n    ... on BasicMessage {\n      data {\n        __typename\n        ... on FullFrameMessageData {\n          __typename\n          name\n          timestamp\n        }\n      }\n      __typename\n    }\n    __typename\n  }\n}'
+                }
+            }));
+        };
+
+        ws.onmessage = (message) => {
+            const { data } = message;
+            const parsed = JSON.parse(data);
+
+            // TODO: ew
+            if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
+
+            ws.close();
+            resolve(parsed.payload.data.subscribe.data.name + `?noCache=${Date.now() * Math.random()}`);
+        }
+
+        ws.onerror = (error) => {
+            console.error("is broken here")
+            reject(error);
+        };
+    });
+}
+
+function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
+    return new Promise((resolve, reject) => {
+        let loadImage = ctx => {
+            var img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                ctx.drawImage(img, x, y);
+                resolve(ctx);
+            };
+            img.onerror = () => {
+                console.log('Fout bij ophalen map. Opnieuw proberen in 3 sec...');
+                setTimeout(() => loadImage(ctx), 3000);
+            };
+            img.src = url;
+        };
+        loadImage(canvas.getContext('2d'));
     });
 }
 
 function rgbToHex(r, g, b) {
     return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
 }
+
+let rgbaOrderToHex = (i, rgbaOrder) =>
+    rgbToHex(rgbaOrder[i * 4], rgbaOrder[i * 4 + 1], rgbaOrder[i * 4 + 2]);
