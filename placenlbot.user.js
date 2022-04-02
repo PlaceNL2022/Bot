@@ -127,11 +127,15 @@ function connectSocket() {
         switch (data.type.toLowerCase()) {
             case 'map':
                 Toastify({
-                    text: `Nieuwe map geladen (reden: ${data.reason ? data.reason : 'verbonden met server'})`,
+                    text: `Nieuwe map laden (reden: ${data.reason ? data.reason : 'verbonden met server'})...`,
                     duration: 10000
                 }).showToast();
                 currentOrderCtx = await getCanvasFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`, currentOrderCanvas);
                 order = getRealWork(currentOrderCtx.getImageData(0, 0, 2000, 1000).data);
+                Toastify({
+                    text: `Nieuwe map geladen, ${order.length} pixels in totaal`,
+                    duration: 10000
+                }).showToast();
                 break;
             default:
                 break;
@@ -181,6 +185,7 @@ async function attemptPlace() {
         return;
     }
 
+    const percentComplete = 100 - Math.ceil(work.length * 100 / order.length);
     const idx = Math.floor(Math.random() * work.length);
     const i = work[idx];
     const x = i % 2000;
@@ -188,7 +193,7 @@ async function attemptPlace() {
     const hex = rgbaOrderToHex(i, rgbaOrder);
 
     Toastify({
-        text: `Pixel proberen te plaatsen op ${x}, ${y}...`,
+        text: `Proberen pixel te plaatsen op ${x}, ${y}... (${percentComplete}% compleet)`,
         duration: 10000
     }).showToast();
 
