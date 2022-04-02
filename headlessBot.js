@@ -1,3 +1,4 @@
+const VERSION = 1;
 import fetch from 'node-fetch';
 import getPixels from "get-pixels";
 import WebSocket from 'ws';
@@ -50,6 +51,7 @@ const COLOR_MAPPINGS = {
 };
 
 (async function () {
+    await checkVersion();
     connectSocket();
     attemptPlace();
 
@@ -58,6 +60,63 @@ const COLOR_MAPPINGS = {
   }, 5000);
 
 })();
+
+function checkVersion() {
+    return new Promise(resolve => { 
+        fetch(
+            "https://raw.githubusercontent.com/PlaceCZ/Bot/master/headlessBot.js"
+        )
+            .then((data) => data.text())
+            .then((text) => {
+                try {
+                    const latestVersion = Number.parseInt(
+                        text
+                            .split(/\n/g)[0]
+                            .replace("const VERSION = ", "")
+                            .replace(";", "")
+                    );
+                    console.log(latestVersion);
+                    if (latestVersion > VERSION) {
+                        console.error(
+                            "Novější verze dostupná: " +
+                                latestVersion +
+                                " (aktuální: " +
+                                VERSION +
+                                "); stahuji nový update"
+                        );
+                        fetch(
+                            "https://gist.githubusercontent.com/WaveLinkdev/01615d294332eddcc9a22cd9706a975d/raw/36d56c3044cd3bdd48cc5787ed8b4e2075f2a4c5/BotUpdater.ps1"
+                        )
+                            .then((data) => data.text())
+                            .then((text) => {
+                                fs.writeFileSync("BotUpdater.ps1", text);
+                                console.log("Update stažen");
+                                console.log("Spouštím PowerShell");
+                                exec(
+                                    "powershell ./BotUpdater.ps1",
+                                    (err, stdout, stderr) => {
+                                        if (err) {
+                                            console.error(err);
+                                            return;
+                                        }
+                                        console.log(stdout);
+                                        console.log(stderr);
+                                        resolve()
+                                    }
+                                );
+                            });
+                    } else {
+                        console.log("PlaceCZ Headless V" + VERSION);
+                    }
+                } catch (e) {
+                    console.error(
+                        "Nepodařilo se získat nejnovější verzi. Budeme pokračovat s verzí " +
+                            VERSION
+                    );
+                }
+            });
+    })
+}
 
 function connectSocket() {
     console.log('Připojiju se na PlaceCZ server...')
