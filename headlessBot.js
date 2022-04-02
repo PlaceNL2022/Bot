@@ -61,7 +61,7 @@ const COLOR_MAPPINGS = {
 })();
 
 function connectSocket() {
-    console.log('Připojiju se na PlaceCZ server...')
+    console.log('Připojuji se na PlaceCZ server...')
 
     socket = new WebSocket('wss://placecz.martinnemi.me/api/ws');
 
