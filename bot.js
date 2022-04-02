@@ -16,6 +16,13 @@ var socket;
 var hasOrders = false;
 var currentOrders;
 
+var order = [];
+for (var i = 0; i < 1000000; i++) {
+    order.push(i);
+}
+order.sort(() => Math.random() - 0.5);
+
+
 const COLOR_MAPPINGS = {
 	'#FF4500': 2,
 	'#FFA800': 3,
@@ -95,7 +102,7 @@ async function attemptPlace() {
     const rgbaOrder = currentOrders.data;
     const rgbaCanvas = currentMap.data;
 
-    for (var i = 0; i < 1000000; i++) {
+    for (const i of order) {
         // negeer lege order pixels.
         if (rgbaOrder[(i * 4) + 3] === 0) continue;
 
