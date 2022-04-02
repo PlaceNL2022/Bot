@@ -1,21 +1,22 @@
 // ==UserScript==
-// @name         PlaceNL Bot
-// @namespace    https://github.com/PlaceNL/Bot
+// @name         PlaceNL Bot (Czech Edition)
+// @namespace    https://github.com/WaveLinkdev/Bot
 // @version      4
-// @description  De bot voor PlaceNL!
+// @description  Bot pro PlaceNL, předelán do češtiny
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
 // @match        https://new.reddit.com/r/place/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=reddit.com
 // @require	     https://cdn.jsdelivr.net/npm/toastify-js
 // @resource     TOASTIFY_CSS https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css
-// @updateURL    https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js
-// @downloadURL  https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js
+// @updateURL    https://github.com/WaveLinkdev/Bot/raw/master/placenlbot.user.js
+// @downloadURL  https://github.com/WaveLinkdev/Bot/raw/master/placenlbot.user.js
 // @grant        GM_getResourceText
 // @grant        GM_addStyle
 // ==/UserScript==
 
 // Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
+// Překlad: Omlouváme se za chaotický kód, spěch a čistota nejdou vždy dohromady. ;)
 
 var placeOrders = [];
 var accessToken;
@@ -47,16 +48,16 @@ const COLOR_MAPPINGS = {
 	canvas = document.body.appendChild(canvas);
 
 	Toastify({
-		text: 'Accesstoken ophalen...',
+		text: 'Získávání přístupového tokenu...',
 		duration: 10000
 	}).showToast();
 	accessToken = await getAccessToken();
 	Toastify({
-		text: 'Accesstoken opgehaald!',
+		text: 'Přístupový token získán!',
 		duration: 10000
 	}).showToast();
 
-	setInterval(updateOrders, 5 * 60 * 1000); // Update orders elke vijf minuten.
+	setInterval(updateOrders, 5 * 60 * 1000); // Aktualizuje příkazy každých pět minut.
 	await updateOrders();
 	attemptPlace();
 })();
@@ -67,12 +68,12 @@ async function attemptPlace() {
 		const canvasUrl = await getCurrentImageUrl();
 		ctx = await getCanvasFromUrl(canvasUrl);
 	} catch (e) {
-		console.warn('Fout bij ophalen map: ', e);
+		console.warn('Chyba při načítání mapy: ', e);
 		Toastify({
-			text: 'Fout bij ophalen map. Opnieuw proberen in 15 sec...',
+			text: 'Chyba při načítání mapy. Opakuju pokus za 15 sekund..',
 			duration: 10000
 		}).showToast();
-		setTimeout(attemptPlace, 15000); // probeer opnieuw in 15sec.
+		setTimeout(attemptPlace, 15000); // Zkusí to znovu za 15 sekund.
 		return;
 	}
 
@@ -83,28 +84,28 @@ async function attemptPlace() {
 		const rgbaAtLocation = ctx.getImageData(x, y, 1, 1).data;
 		const hex = rgbToHex(rgbaAtLocation[0], rgbaAtLocation[1], rgbaAtLocation[2]);
 		const currentColorId = COLOR_MAPPINGS[hex];
-		// Deze pixel klopt al.
+		// Tento pixel je již správný.
 		if (currentColorId == colorId) continue;
 
 		Toastify({
-			text: `Pixel proberen te plaatsen op ${x}, ${y}...`,
+			text: `Pokus o umístění pixelu na ${x}, ${y}...`,
 			duration: 10000
 		}).showToast();
 		await place(x, y, colorId);
 
 		Toastify({
-			text: `Wachten op cooldown...`,
+			text: `Čekání na vychladnutí...`,
 			duration: 315000
 		}).showToast();
-		setTimeout(attemptPlace, 315000); // 5min en 15sec, just to be safe.
+		setTimeout(attemptPlace, 315000); // 5 minut a 15 sekund, jen pro jistotu.
 		return;
 	}
 
 	Toastify({
-		text: 'Alle pixels staan al op de goede plaats!',
+		text: 'Všechny pixely jsou již na správném místě!',
 		duration: 10000
 	}).showToast();
-	setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
+	setTimeout(attemptPlace, 30000); // Zkusí to znovu za 30 sekund.
 }
 
 function updateOrders() {
@@ -114,13 +115,13 @@ function updateOrders() {
 
 		if (JSON.stringify(data) !== JSON.stringify(placeOrders)) {
 			Toastify({
-				text: `Nieuwe orders geladen. Totaal aantal pixels: ${data.length}.`,
+				text: `Nové příkazy načteny. Celkový počet pixelů: ${data.length}.`,
 				duration: 10000
 			}).showToast();
 		}
 
 		placeOrders = data;
-	}).catch((e) => console.warn('Kan orders niet ophalen!', e));
+	}).catch((e) => console.warn('Nepovedlo se načíst příkazy!', e));
 }
 
 function place(x, y, color) {
@@ -199,11 +200,12 @@ async function getCurrentImageUrl() {
 			const parsed = JSON.parse(data);
 
 			// TODO: ew
+			// Poznámka editora: ew indeed.
 			if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
 
 			ws.close();
 			resolve(parsed.payload.data.subscribe.data.name);
-		}
+		};
 
 
 		ws.onerror = reject;
