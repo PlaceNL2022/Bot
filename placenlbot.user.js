@@ -18,7 +18,7 @@
 // Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
 
 var socket;
-var hasOrders = false;
+var order = undefined;
 var accessToken;
 var currentOrderCanvas = document.createElement('canvas');
 var currentOrderCtx = currentOrderCanvas.getContext('2d');
@@ -51,11 +51,25 @@ const COLOR_MAPPINGS = {
     '#FFFFFF': 31
 };
 
-var order = [];
-for (var i = 0; i < 200000; i++) {
-    order.push(i);
-}
-order.sort(() => Math.random() - 0.5);
+let getRealWork = rgbaOrder => {
+    let order = [];
+    for (var i = 0; i < 2000000; i++) {
+        if (rgbaOrder[(i * 4) + 3] !== 0) {
+            order.push(i);
+        }
+    }
+    return order;
+};
+
+let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
+    let pendingWork = [];
+    for (const i of work) {
+        if (rgbaOrderToHex(i, rgbaOrder) !== rgbaOrderToHex(i, rgbaCanvas)) {
+            pendingWork.push(i);
+        }
+    }
+    return pendingWork;
+};
 
 (async function () {
     GM_addStyle(GM_getResourceText('TOASTIFY_CSS'));
@@ -117,7 +131,7 @@ function connectSocket() {
                     duration: 10000
                 }).showToast();
                 currentOrderCtx = await getCanvasFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`, currentOrderCanvas);
-                hasOrders = true;
+                order = getRealWork(currentOrderCtx.getImageData(0, 0, 2000, 1000).data);
                 break;
             default:
                 break;
@@ -136,7 +150,7 @@ function connectSocket() {
 }
 
 async function attemptPlace() {
-    if (!hasOrders) {
+    if (order === undefined) {
         setTimeout(attemptPlace, 2000); // probeer opnieuw in 2sec.
         return;
     }
@@ -156,65 +170,59 @@ async function attemptPlace() {
 
     const rgbaOrder = currentOrderCtx.getImageData(0, 0, 2000, 1000).data;
     const rgbaCanvas = ctx.getImageData(0, 0, 2000, 1000).data;
+    const work = getPendingWork(order, rgbaOrder, rgbaCanvas);
 
-    for (const j of order) {
-        for (var l = 0; l < 10; l++) {
-            const i = (j * 10) + l;
-            // negeer lege order pixels.
-            if (rgbaOrder[(i * 4) + 3] === 0) continue;
-
-            const hex = rgbToHex(rgbaOrder[(i * 4)], rgbaOrder[(i * 4) + 1], rgbaOrder[(i * 4) + 2]);
-            // Deze pixel klopt.
-            if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
-
-            const x = i % 2000;
-            const y = Math.floor(i / 2000);
-            Toastify({
-                text: `Pixel proberen te plaatsen op ${x}, ${y}...`,
-                duration: 10000
-            }).showToast();
-
-            const res = await place(x, y, COLOR_MAPPINGS[hex]);
-            const data = await res.json();
-            try {
-                if (data.errors) {
-                    const error = data.errors[0];
-                    const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
-                    const nextPixelDate = new Date(nextPixel);
-                    const delay = nextPixelDate.getTime() - Date.now();
-                    Toastify({
-                        text: `Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`,
-                        duration: delay
-                    }).showToast();
-                    setTimeout(attemptPlace, delay);
-                } else {
-                    const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
-                    const nextPixelDate = new Date(nextPixel);
-                    const delay = nextPixelDate.getTime() - Date.now();
-                    Toastify({
-                        text: `Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`,
-                        duration: delay
-                    }).showToast();
-                    setTimeout(attemptPlace, delay);
-                }
-            } catch (e) {
-                console.warn('Fout bij response analyseren', e);
-                Toastify({
-                    text: `Fout bij response analyseren: ${e}.`,
-                    duration: 10000
-                }).showToast();
-                setTimeout(attemptPlace, 10000);
-            }
-
-            return;
-        }
+    if (work.length === 0) {
+        Toastify({
+            text: `Alle pixels staan al op de goede plaats! Opnieuw proberen in 30 sec...`,
+            duration: 30000
+        }).showToast();
+        setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
+        return;
     }
 
+    const idx = Math.floor(Math.random() * work.length);
+    const i = work[idx];
+    const x = i % 2000;
+    const y = Math.floor(i / 2000);
+    const hex = rgbaOrderToHex(i, rgbaOrder);
+
     Toastify({
-        text: `Alle pixels staan al op de goede plaats! Opnieuw proberen in 30 sec...`,
-        duration: 30000
+        text: `Pixel proberen te plaatsen op ${x}, ${y}...`,
+        duration: 10000
     }).showToast();
-    setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
+
+    const res = await place(x, y, COLOR_MAPPINGS[hex]);
+    const data = await res.json();
+    try {
+        if (data.errors) {
+            const error = data.errors[0];
+            const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
+            const nextPixelDate = new Date(nextPixel);
+            const delay = nextPixelDate.getTime() - Date.now();
+            Toastify({
+                text: `Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`,
+                duration: delay
+            }).showToast();
+            setTimeout(attemptPlace, delay);
+        } else {
+            const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
+            const nextPixelDate = new Date(nextPixel);
+            const delay = nextPixelDate.getTime() - Date.now();
+            Toastify({
+                text: `Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`,
+                duration: delay
+            }).showToast();
+            setTimeout(attemptPlace, delay);
+        }
+    } catch (e) {
+        console.warn('Fout bij response analyseren', e);
+        Toastify({
+            text: `Fout bij response analyseren: ${e}.`,
+            duration: 10000
+        }).showToast();
+        setTimeout(attemptPlace, 10000);
+    }
 }
 
 function place(x, y, color) {
@@ -321,3 +329,6 @@ function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
 function rgbToHex(r, g, b) {
     return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
 }
+
+let rgbaOrderToHex = (i, rgbaOrder) =>
+    rgbToHex(rgbaOrder[i * 4], rgbaOrder[i * 4 + 1], rgbaOrder[i * 4 + 2]);
