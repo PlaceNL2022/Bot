@@ -31,4 +31,6 @@ Headless bota můžete používat bez otevřeného browseru a s více účty nar
 <žádám o doplnění>
 v prohlížeči otevřít nástroje pro vývojáře, přepnout na tabulku síť,  reloadnout r/place, a v požadavku na /r/place tak v odpovedi najít "accessToken":<token>, token zkopírovat a dát jako parametr do toho headless bota
 
-  Video credit - fuho#7423
+https://user-images.githubusercontent.com/35738060/161390213-d7f8354c-a97d-4a0f-9442-f33ba84941ba.mp4
+
+Video credit - fuho#7423
