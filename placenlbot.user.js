@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         PlaceNL Bot
-// @namespace    https://github.com/PlaceNL/Bot
+// @namespace    https://github.com/knauth/Bot
 // @version      9
 // @description  De bot voor PlaceNL!
 // @author       NoahvdAa
@@ -9,8 +9,8 @@
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=reddit.com
 // @require	     https://cdn.jsdelivr.net/npm/toastify-js
 // @resource     TOASTIFY_CSS https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css
-// @updateURL    https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js
-// @downloadURL  https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js
+// @updateURL    https://github.com/knauth/Bot/raw/master/placenlbot.user.js
+// @downloadURL  https://github.com/knauth/Bot/raw/master/placenlbot.user.js
 // @grant        GM_getResourceText
 // @grant        GM_addStyle
 // ==/UserScript==
@@ -23,6 +23,7 @@ var accessToken;
 var currentOrderCanvas = document.createElement('canvas');
 var currentOrderCtx = currentOrderCanvas.getContext('2d');
 var currentPlaceCanvas = document.createElement('canvas');
+var cnc_url = ''
 
 const COLOR_MAPPINGS = {
     '#BE0039': 1,
@@ -92,7 +93,7 @@ function connectSocket() {
         duration: 10000
     }).showToast();
 
-    socket = new WebSocket('wss://placenl.noahvdaa.me/api/ws');
+    socket = new WebSocket(`wss://${cnc_url}/api/ws`);
 
     socket.onopen = function () {
         Toastify({
@@ -116,7 +117,7 @@ function connectSocket() {
                     text: `Nieuwe map geladen (reden: ${data.reason ? data.reason : 'verbonden met server'})`,
                     duration: 10000
                 }).showToast();
-                currentOrderCtx = await getCanvasFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`, currentOrderCanvas);
+                currentOrderCtx = await getCanvasFromUrl(`https://${cnc_url}/maps/${data.data}`, currentOrderCanvas);
                 hasOrders = true;
                 break;
             default:
