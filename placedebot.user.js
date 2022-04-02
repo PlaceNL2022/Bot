@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceDE Bot
 // @namespace    https://github.com/PlaceDE/Bot
-// @version      7
+// @version      8
 // @description  /r/place bot
 // @author       NoahvdAa, reckter, SgtChrome, nama17
 // @match        https://www.reddit.com/r/place/*
@@ -200,7 +200,9 @@ async function place(x, y, color) {
 }
 
 async function getAccessToken() {
-	const response = await fetch('https://www.reddit.com/r/place/');
+	const usingOldReddit = window.location.href.includes('new.reddit.com');
+	const url = usingOldReddit ? 'https://new.reddit.com/r/place/' : 'https://www.reddit.com/r/place/';
+	const response = await fetch(url);
 	const responseText = await response.text();
 
 	// TODO: ew
