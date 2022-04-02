@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceDE Bot
 // @namespace    https://github.com/PlaceDE/Bot
-// @version      6
+// @version      7
 // @description  /r/place bot
 // @author       NoahvdAa, reckter, SgtChrome, nama17
 // @match        https://www.reddit.com/r/place/*
@@ -110,13 +110,18 @@ async function attemptPlace() {
 			text: `Pixel wird gesetzt auf ${x}, ${y}...`,
 			duration: 10000
 		}).showToast();
-		await place(x, y, colorId);
+		const nextAvailablePixelTimestamp = await place(x, y, colorId) ?? new Date(Date.now().valueOf() + 1000 * 60 * 5 + 1000 * 15)
 
+		// Add a few random seconds to the next available pixel timestamp
+		const waitFor = nextAvailablePixelTimestamp - Date.now() + (Math.random() * 1000 * 15);
+
+		const minutes = Math.floor(waitFor / (1000 * 60))
+		const seconds = Math.floor((waitFor / 1000) % 60)
 		Toastify({
-			text: `Warten auf Abkühlzeit.`,
-			duration: 315000
+			text: `Warten auf Abkühlzeit ${minutes}:${seconds} bis ${new Date(nextAvailablePixelTimestamp).toLocaleTimeString()}`,
+			duration: waitFor
 		}).showToast();
-		setTimeout(attemptPlace, 315000); // 5min en 15sec, just to be safe.
+		setTimeout(attemptPlace, waitFor); // 5min en 15sec, just to be safe.
 		return;
 	}
 
@@ -148,8 +153,15 @@ function updateOrders() {
 	}).catch((e) => console.warn('Bestellungen können nicht geladen werden!', e));
 }
 
-function place(x, y, color) {
-	return fetch('https://gql-realtime-2.reddit.com/query', {
+/**
+ * Places a pixel on the canvas, returns the "nextAvailablePixelTimestamp", if succesfull
+ * @param x
+ * @param y
+ * @param color
+ * @returns {Promise<number>}
+ */
+async function place(x, y, color) {
+	const response = await fetch('https://gql-realtime-2.reddit.com/query', {
 		method: 'POST',
 		body: JSON.stringify({
 			'operationName': 'setPixel',
@@ -176,6 +188,15 @@ function place(x, y, color) {
 			'Content-Type': 'application/json'
 		}
 	});
+	const data = await response.json()
+	if (data.errors != undefined) {
+		Toastify({
+			text: 'Fehler beim Platzieren des Pixels, warte auf Abkühlzeit...',
+			duration: 10000
+		}).showToast();
+		return data.errors[0].extensions?.nextAvailablePixelTs
+	}
+	return data?.data?.act?.data?.[0]?.data?.nextAvailablePixelTimestamp
 }
 
 async function getAccessToken() {
