@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot
 // @namespace    https://github.com/PlaceNL/Bot
-// @version      5
+// @version      6
 // @description  De bot voor PlaceNL!
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
@@ -42,6 +42,12 @@ const COLOR_MAPPINGS = {
     '#D4D7D9': 30,
     '#FFFFFF': 31
 };
+
+var order = [];
+for (var i = 0; i < 1000000; i++) {
+    order.push(i);
+}
+order.sort(() => Math.random() - 0.5);
 
 (async function () {
     GM_addStyle(GM_getResourceText('TOASTIFY_CSS'));
@@ -137,7 +143,7 @@ async function attemptPlace() {
     const rgbaOrder = currentOrderCtx.getImageData(0, 0, 1000, 1000).data;
     const rgbaCanvas = ctx.getImageData(0, 0, 1000, 1000).data;
 
-    for (var i = 0; i < 1000000; i++) {
+    for (const i of order) {
         // negeer lege order pixels.
         if (rgbaOrder[(i * 4) + 3] === 0) continue;
 
