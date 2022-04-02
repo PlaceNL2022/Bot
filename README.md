@@ -8,7 +8,7 @@ Bot pro PlaceNL! Tento robot automaticky načítá příkazy každých pár minu
 Než začnete, ujistěte se, že odpočet pro umístění pixelu vypršel! (Viz nevýhody bota)
 
 1. Nainstalujte si rozšíření prohlížeče [Tampermonkey](https://www.tampermonkey.net/)
-2. Klikněte na tento odkaz: https://github.com/PlaceCZ/Bot/raw/master/placenlbot.user.js. Pokud vše půjde dobře, Tampermonkey by vám měl nabídnout instalaci uživatelského skriptu. Klikněte na **Instalovat**.
+2. Klikněte na [tento odkaz](./tampermonkey/placenlbot.user.js?raw=1). Pokud vše půjde dobře, Tampermonkey by vám měl nabídnout instalaci uživatelského skriptu. Klikněte na **Instalovat**.
 3. Otevřte nebo obnovte stránku **r/place**. Pokud vše proběhlo v pořádku, v pravém horním rohu obrazovky se zobrazí „Získávání přístupového tokenu...“. Robot je nyní aktivní a bude vás informovat o tom, co dělá, prostřednictvím těchto oznámení v pravé horní části obrazovky.
 
 
@@ -31,11 +31,14 @@ Bot totiž ještě nezohledňuje již probíhající odpočet, takže předpokl�
 Headless bota můžete používat bez otevřeného browseru a s více účty naráz. K spuštění tohoto bota je potřeba [NodeJS](https://nodejs.org/en/)Jako první si stáhněte [Script](https://raw.githubusercontent.com/PlaceCZ/Bot/master/headlessBot.js), Poté v složce ve které jste si script stáhly otevřete terminál a spusťte komand `npm install`. Ve složce musí být i soubor [package.json](https://raw.githubusercontent.com/PlaceCZ/Bot/master/package.json) aby se to mohlo nainstalovat. Komand stáhne potřebné balíčky a potom bota zapněte pomocí `node headlessBot.js <token>`.
 
 ## Získání tokenu
-<žádám o doplnění>
-v prohlížeči otevřít nástroje pro vývojáře, přepnout na tabulku síť,  reloadnout r/place, a v požadavku na /r/place tak v odpovedi najít "accessToken":<token>, token zkopírovat a dát jako parametr do toho headless bota
-  
- Alternativa: Pouzit [tento script](https://gist.github.com/WaveLinkdev/8daa57db6f2283fc32a0b956257c8fc6) v tapermonkey 
 
+### Pomoci Tampermonkey:  
+Kliknete na [tento link]() a Tampermonkey vám měl nabídne instalaci uživatelského skriptu. Klikněte na **Instalovat**. Nyni se vratte na `r/place` a znovu stranku nactete. Po chvilce by se vam mel zobrazit alert s vasim TOKENem, tento si zkopirujte a nekam ulozte.  
+![token_alert](https://user-images.githubusercontent.com/539452/161394556-09c14efe-9f1d-4511-92bc-682100f34043.jpg)
+
+### Pomoci dev-tools v prohlizeci:  
+V prohlížeči otevřete nástroje pro vývojáře, přepnete na zalozku síť,  reloadnout r/place, a v požadavku na `/r/place` v odpovedi najít `"accessToken":<token>`, token zkopírovat a dát jako parametr do headless bota.
+  
 https://user-images.githubusercontent.com/35738060/161390213-d7f8354c-a97d-4a0f-9442-f33ba84941ba.mp4
 
 Video credit - fuho#7423
