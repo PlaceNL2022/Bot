@@ -5,7 +5,7 @@ import process from 'process';
 
 const args = process.argv.slice(2);
 
-if (args.length != 1) {
+if (args.length !== 1) {
     console.error("Chybí access token.")
     process.exit(1);
 }
