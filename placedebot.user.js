@@ -133,7 +133,7 @@ function updateOrders() {
 		const data = await response.json();
 
 		if (JSON.stringify(data) !== JSON.stringify(placeOrders)) {
-			const structureCount = Object.keys(data.structures);
+			const structureCount = Object.keys(data.structures).length;
 			let pixelCount = 0;
 			for (const structureName in data.structures) {
 				pixelCount += data.structures[structureName].pixels.length;
