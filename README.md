@@ -25,7 +25,7 @@ Bot totiž ještě nezohledňuje již probíhající odpočet, takže předpokl�
 
 ## Headless Bot
 
-Headless bota můžete používat bez otevřeného browseru a s více účty naráz. K spuštění tohoto bota je potřeba [NodeJS](https://nodejs.org/en/)Jako první si stáhněte [Script](https://raw.githubusercontent.com/PlaceCZ/Bot/master/headlessBot.js), Poté v složce ve které jste si script stáhly otevřete terminál a spusťte komand `npm install`. Komand stáhne potřebné balíčky a potom bota zapněte pomocí `node headlessBot.js <token>`.
+Headless bota můžete používat bez otevřeného browseru a s více účty naráz. K spuštění tohoto bota je potřeba [NodeJS](https://nodejs.org/en/)Jako první si stáhněte [Script](https://raw.githubusercontent.com/PlaceCZ/Bot/master/headlessBot.js), Poté v složce ve které jste si script stáhly otevřete terminál a spusťte komand `npm install`. Ve složce musí být i soubor package.json aby se to mohlo nainstalovat. Komand stáhne potřebné balíčky a potom bota zapněte pomocí `node headlessBot.js <token>`.
 
 ## Získání tokenu
 <žádám o doplnění>
