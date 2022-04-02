@@ -103,8 +103,8 @@ async function attemptPlace() {
     }
     var currentMap;
     try {
-        currentMap = await getMapFromUrl(getCurrentImageUrl('0'));
-        currentMap = await getMapFromUrl(getCurrentImageUrl('1'));
+        currentMap = await getMapFromUrl(await getCurrentImageUrl('0'));
+        currentMap = await getMapFromUrl(await getCurrentImageUrl('1'));
     } catch (e) {
         console.warn('Chyba při načítání momentálního canvasu: ', e);
         setTimeout(attemptPlace, 15000);
