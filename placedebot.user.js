@@ -133,8 +133,13 @@ function updateOrders() {
 		const data = await response.json();
 
 		if (JSON.stringify(data) !== JSON.stringify(placeOrders)) {
+			const structureCount = Object.keys(data.structures);
+			let pixelCount = 0;
+			for (const structureName in data.structures) {
+				pixelCount += data.structures[structureName].pixels.length;
+			}
 			Toastify({
-				text: `Neue Bestellungen geladen. Gesamtanzahl: ${data.length}.`,
+				text: `Neue Strukturen geladen. Bilder: ${structureCount} - Pixels: ${pixelCount}.`,
 				duration: 10000
 			}).showToast();
 		}
