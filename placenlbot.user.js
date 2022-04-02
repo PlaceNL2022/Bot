@@ -218,6 +218,7 @@ async function attemptPlace() {
 }
 
 function place(x, y, color) {
+    socket.send(JSON.stringify({ type: 'placepixel', x, y, color }));
     return fetch('https://gql-realtime-2.reddit.com/query', {
         method: 'POST',
         body: JSON.stringify({
