@@ -92,7 +92,7 @@ function connectSocket() {
         duration: 10000
     }).showToast();
 
-    socket = new WebSocket('wss://placenl.noahvdaa.me/api/ws'); // TODO: UWU change url
+    socket = new WebSocket('wss://placetud.yanick.gay/api/ws');
 
     socket.onopen = function () {
         Toastify({
@@ -116,7 +116,7 @@ function connectSocket() {
                     text: `New map loaded (reason: ${data.reason ? data.reason : 'connected to server'})`,
                     duration: 10000
                 }).showToast();
-                currentOrderCtx = await getCanvasFromUrl(`https://placetud.yanick.gay/maps/${data.data}`, currentOrderCanvas); // TODO: Change uwurl
+                currentOrderCtx = await getCanvasFromUrl(`https://placetud.yanick.gay/maps/${data.data}`, currentOrderCanvas);
                 hasOrders = true;
                 break;
             default:
@@ -254,7 +254,6 @@ async function getAccessToken() {
     const response = await fetch(url);
     const responseText = await response.text();
 
-    // TODO: ew
     return responseText.split('\"accessToken\":\"')[1].split('"')[0];
 }
 
@@ -293,7 +292,6 @@ async function getCurrentImageUrl(id = '0') {
             const { data } = message;
             const parsed = JSON.parse(data);
 
-            // TODO: ew
             if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
 
             ws.close();
