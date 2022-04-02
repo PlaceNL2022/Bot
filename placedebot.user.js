@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceDE Bot
 // @namespace    https://github.com/PlaceDE/Bot
-// @version      8
+// @version      9
 // @description  /r/place bot
 // @author       NoahvdAa, reckter, SgtChrome, nama17
 // @match        https://www.reddit.com/r/place/*
@@ -20,6 +20,9 @@
 var placeOrders = [];
 var accessToken;
 var canvas = document.createElement('canvas');
+
+const VERSION = 9
+var UPDATE_PENDING = false;
 
 const COLOR_MAPPINGS = {
 	'#FF4500': 2,
@@ -149,6 +152,18 @@ function updateOrders() {
 			}).showToast();
 		}
 
+		if (data?.version !== VERSION && !UPDATE_PENDING) {
+			UPDATE_PENDING = true
+			Toastify({
+				text: `NEUE VERSION VERFÜGBAR! Aktualisiere hier https://github.com/placeDE/Bot/raw/main/placedebot.user.js`,
+				duration: -1,
+				onClick: () => {
+					// Tapermonkey captures this and opens a new tab
+					window.location = 'https://github.com/placeDE/Bot/raw/main/placedebot.user.js'
+				}
+			}).showToast();
+
+		}
 		placeOrders = data;
 	}).catch((e) => console.warn('Bestellungen können nicht geladen werden!', e));
 }
