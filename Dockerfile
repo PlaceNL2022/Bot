@@ -4,4 +4,4 @@ COPY package*.json ./
 RUN npm ci
 USER node
 COPY bot.js .
-CMD ["node", "bot.js"]
+ENTRYPOINT ["node", "bot.js"]
