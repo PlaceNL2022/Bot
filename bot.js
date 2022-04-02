@@ -17,29 +17,37 @@ var hasOrders = false;
 var currentOrders;
 
 var order = [];
-for (var i = 0; i < 1000000; i++) {
+for (var i = 0; i < 2000000; i++) {
     order.push(i);
 }
 order.sort(() => Math.random() - 0.5);
 
 
 const COLOR_MAPPINGS = {
-	'#FF4500': 2,
-	'#FFA800': 3,
-	'#FFD635': 4,
-	'#00A368': 6,
-	'#7EED56': 8,
-	'#2450A4': 12,
-	'#3690EA': 13,
-	'#51E9F4': 14,
-	'#811E9F': 18,
-	'#B44AC0': 19,
-	'#FF99AA': 23,
-	'#9C6926': 25,
-	'#000000': 27,
-	'#898D90': 29,
-	'#D4D7D9': 30,
-	'#FFFFFF': 31
+	'#BE0039': 1,
+    '#FF4500': 2,
+    '#FFA800': 3,
+    '#FFD635': 4,
+    '#00A368': 6,
+    '#00CC78': 7,
+    '#7EED56': 8,
+    '#00756F': 9,
+    '#009EAA': 10,
+    '#2450A4': 12,
+    '#3690EA': 13,
+    '#51E9F4': 14,
+    '#493AC1': 15,
+    '#6A5CFF': 16,
+    '#811E9F': 18,
+    '#B44AC0': 19,
+    '#FF3881': 22,
+    '#FF99AA': 23,
+    '#6D482F': 24,
+    '#9C6926': 25,
+    '#000000': 27,
+    '#898D90': 29,
+    '#D4D7D9': 30,
+    '#FFFFFF': 31
 };
 
 (async function () {
@@ -55,6 +63,10 @@ function connectSocket() {
     console.log('Verbinden met PlaceNL server...')
 
     socket = new WebSocket('wss://placenl.noahvdaa.me/api/ws');
+
+    socket.onerror = function(e) {
+        console.error("Socket error: " + e.message)
+    }
 
     socket.onopen = function () {
         console.log('Verbonden met PlaceNL server!')
@@ -93,10 +105,12 @@ async function attemptPlace() {
         setTimeout(attemptPlace, 2000); // probeer opnieuw in 2sec.
         return;
     }
-    var currentMap;
+    
+    var map0;
+    var map1;
     try {
-        const canvasUrl = await getCurrentImageUrl();
-        currentMap = await getMapFromUrl(canvasUrl);
+        map0 = await getMapFromUrl(await getCurrentImageUrl('0'))
+        map1 = await getMapFromUrl(await getCurrentImageUrl('1'));
     } catch (e) {
         console.warn('Fout bij ophalen map: ', e);
         setTimeout(attemptPlace, 15000); // probeer opnieuw in 15sec.
@@ -104,7 +118,7 @@ async function attemptPlace() {
     }
 
     const rgbaOrder = currentOrders.data;
-    const rgbaCanvas = currentMap.data;
+    const rgbaCanvas = [].concat(map0.data, map1.data);
 
     for (const i of order) {
         // negeer lege order pixels.
@@ -114,8 +128,8 @@ async function attemptPlace() {
         // Deze pixel klopt.
         if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
 
-        const x = i % 1000;
-        const y = Math.floor(i / 1000);
+        const x = i % 2000;
+        const y = Math.floor(i / 2000);
         console.log(`Pixel proberen te plaatsen op ${x}, ${y}...`)
 
         const res = await place(x, y, COLOR_MAPPINGS[hex]);
@@ -159,11 +173,11 @@ function place(x, y, color) {
 					'actionName': 'r/replace:set_pixel',
 					'PixelMessageData': {
 						'coordinate': {
-							'x': x,
-							'y': y
+							'x': x % 1000,
+							'y': y % 1000
 						},
 						'colorIndex': color,
-						'canvasIndex': 0
+						'canvasIndex': (x > 999 ? 1 : 0)
 					}
 				}
 			},
@@ -179,7 +193,7 @@ function place(x, y, color) {
 	});
 }
 
-async function getCurrentImageUrl() {
+async function getCurrentImageUrl(id = '0') {
 	return new Promise((resolve, reject) => {
 		const ws = new WebSocket('wss://gql-realtime-2.reddit.com/query', 'graphql-ws', {
         headers : {
@@ -205,7 +219,7 @@ async function getCurrentImageUrl() {
 							'channel': {
 								'teamOwner': 'AFD2022',
 								'category': 'CANVAS',
-								'tag': '0'
+								'tag': id
 							}
 						}
 					},
@@ -224,7 +238,7 @@ async function getCurrentImageUrl() {
 			if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
 
 			ws.close();
-			resolve(parsed.payload.data.subscribe.data.name);
+			resolve(parsed.payload.data.subscribe.data.name + `?noCache=${Date.now() * Math.random()}`);
 		}
 
 
