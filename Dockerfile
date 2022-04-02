@@ -8,4 +8,4 @@ COPY package*.json .
 RUN npm ci
 
 USER node
-CMD ["node", "bot.js", "$ACCESS-TOKEN"]
+CMD ["node", "bot.js"]
