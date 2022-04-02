@@ -1,21 +1,22 @@
 // ==UserScript==
-// @name         PlaceNL Bot
-// @namespace    https://github.com/PlaceNL/Bot
-// @version      6
-// @description  De bot voor PlaceNL!
+// @name         PlaceNL Bot (Czech Edition)
+// @namespace    https://github.com/PlaceCZ/Bot
+// @version      4
+// @description  Bot pro PlaceNL, předelán do češtiny
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
 // @match        https://new.reddit.com/r/place/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=reddit.com
 // @require	     https://cdn.jsdelivr.net/npm/toastify-js
 // @resource     TOASTIFY_CSS https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css
-// @updateURL    https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js
-// @downloadURL  https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js
+// @updateURL    https://github.com/PlaceCZ/Bot/raw/master/placenlbot.user.js
+// @downloadURL  https://github.com/PlaceCZ/Bot/raw/master/placenlbot.user.js
 // @grant        GM_getResourceText
 // @grant        GM_addStyle
 // ==/UserScript==
 
 // Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
+// Překlad: Omlouváme se za chaotický kód, spěch a čistota nejdou vždy dohromady. ;)
 
 var socket;
 var hasOrders = false;
@@ -23,6 +24,8 @@ var accessToken;
 var currentOrderCanvas = document.createElement('canvas');
 var currentOrderCtx = currentOrderCanvas.getContext('2d');
 var currentPlaceCanvas = document.createElement('canvas');
+
+const BackendAddress = 'https://placecz.martinnemi.me'
 
 const COLOR_MAPPINGS = {
     '#FF4500': 2,
@@ -78,7 +81,7 @@ function connectSocket() {
         duration: 10000
     }).showToast();
 
-    socket = new WebSocket('wss://placenl.noahvdaa.me/api/ws');
+    socket = new WebSocket(`${BackendAddress}/ws/api`);
 
     socket.onopen = function () {
         Toastify({
@@ -102,7 +105,7 @@ function connectSocket() {
                     text: `Nieuwe map geladen (reden: ${data.reason ? data.reason : 'verbonden met server'})`,
                     duration: 10000
                 }).showToast();
-                currentOrderCtx = await getCanvasFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`, currentOrderCanvas);
+                currentOrderCtx = await getCanvasFromUrl(`${BackendAddress}/maps/${data.data}`, currentOrderCanvas);
                 hasOrders = true;
                 break;
             default:
