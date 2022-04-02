@@ -7,7 +7,7 @@ Robot pro PlaceNL! Tento robot automaticky načítá objednávky každých pár 
 Než začnete, ujistěte se, že vaše pixelová latence vypršela!
 
 1. Nainstalujte si rozšíření prohlížeče Tampermonkey.
-2. Klikněte na tento odkaz: https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js. Pokud vše půjde dobře, Tampermonkey by vám měl nabídnout instalaci uživatelského skriptu. Klikněte na **Instalovat**.
+2. Klikněte na tento odkaz: https://github.com/PlaceCZ/Bot/raw/master/placenlbot.user.js. Pokud vše půjde dobře, Tampermonkey by vám měl nabídnout instalaci uživatelského skriptu. Klikněte na **Instalovat**.
 3. Znovu načtěte stránku **r/place**. Pokud vše proběhlo v pořádku, v pravém horním rohu obrazovky se zobrazí „Získávání přístupového tokenu...“. Robot je nyní aktivní a bude vás informovat o tom, co dělá, prostřednictvím těchto oznámení v pravé horní části obrazovky.
 
 ## Nevýhody tohoto bota
