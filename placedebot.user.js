@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceDE Bot
 // @namespace    https://github.com/PlaceDE/Bot
-// @version      5
+// @version      6
 // @description  /r/place bot
 // @author       NoahvdAa, reckter, SgtChrome, nama17
 // @match        https://www.reddit.com/r/place/*
@@ -63,7 +63,7 @@ const COLOR_MAPPINGS = {
 
 function shuffleWeighted(array) {
 	for (const item of array) {
-		item.rndPriority = Math.round(item.priority * Math.random());
+		item.rndPriority = Math.round(placeOrders.priorities[item.priority] * Math.random());
 	}
 	array.sort((a, b) => b.rndPriority - a.rndPriority);
 }
