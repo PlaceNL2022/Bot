@@ -1,0 +1,7 @@
+version: "3.9"
+
+services:
+  soldat:
+    build: .
+    environment:
+      - ACCESS_TOKEN=${ACCESS_TOKEN}
