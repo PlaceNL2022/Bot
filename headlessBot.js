@@ -13,6 +13,7 @@ if (args.length != 1 && !process.env.ACCESS_TOKEN) {
 }
 
 let accessToken = process.env.ACCESS_TOKEN || args[0];
+let panel = process.env.PANEL || "placecz.martinnemi.me";
 
 let socket;
 let hasOrders = false;
@@ -125,10 +126,10 @@ function checkVersion() {
 function connectSocket() {
     console.log('Připojuji se na PlaceCZ server...')
 
-    socket = new WebSocket('wss://placecz.martinnemi.me/api/ws');
+    socket = new WebSocket('wss://'+panel+'/api/ws');
 
     socket.onopen = function () {
-        console.log('Připojeno na PlaceCZ server!')
+        console.log('Připojeno na PlaceCZ server! '+"("+panel+')');
         socket.send(JSON.stringify({ type: 'getmap' }));
     };
 
@@ -144,7 +145,7 @@ function connectSocket() {
             case 'map':
                 console.debug("data: %j", data)
                 console.log(`Nové příkazy načteny (důvod: ${data.reason ? data.reason : 'Připojeno k serveru'})`)
-                currentOrders = await getMapFromUrl(`https://placecz.martinnemi.me/maps/${data.data}`);
+                currentOrders = await getMapFromUrl(`https://`+panel+`/maps/${data.data}`);
                 hasOrders = true;
                 break;
             default:
