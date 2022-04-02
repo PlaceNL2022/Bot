@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot (Czech Edition)
 // @namespace    https://github.com/PlaceCZ/Bot
-// @version      10
+// @version      11
 // @description  Bot pro PlaceNL, předelán do češtiny
 // @author       NoahvdAa, GravelCZ, MartinNemi03
 // @match        https://www.reddit.com/r/place/*
@@ -235,11 +235,11 @@ function place(x, y, color) {
                     'actionName': 'r/replace:set_pixel',
                     'PixelMessageData': {
                         'coordinate': {
-                            'x': x,
-                            'y': y
+                            'x': x % 1000,
+                            'y': y % 1000
                         },
                         'colorIndex': color,
-                        'canvasIndex': 0
+                        'canvasIndex': (x > 999 ? 1 : 0)
                     }
                 }
             },
