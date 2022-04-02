@@ -81,7 +81,7 @@ function connectSocket() {
         duration: 10000
     }).showToast();
 
-    socket = new WebSocket(`wss://${BackendAddress}/ws/api`);
+    socket = new WebSocket(`wss://${BackendAddress}/api/ws`);
 
     const errorTimeout = setTimeout(() => {
         Toastify({
