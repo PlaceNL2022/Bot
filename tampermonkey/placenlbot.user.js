@@ -80,6 +80,7 @@ const COLOR_MAPPINGS = {
 
     connectSocket();
     attemptPlace();
+
     setInterval(() => {
         if (socket) socket.send(JSON.stringify({ type: 'ping' }));
     }, 5000);
@@ -145,7 +146,7 @@ function connectSocket() {
 
 async function attemptPlace() {
     if (!hasOrders) {
-        setTimeout(attemptPlace, 2000); // probeer opnieuw in 2sec.
+        setTimeout(attemptPlace, 2000); // try again in 2sec.
         return;
     }
     var ctx;
@@ -225,7 +226,7 @@ async function attemptPlace() {
         text: `Všechny pixely jsou již na správném místě! Zkouším to znovu za 30 sekund...`,
         duration: 30000
     }).showToast();
-    setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
+    setTimeout(attemptPlace, 30000); // try again in 30sec.
 }
 
 function place(x, y, color) {
@@ -264,13 +265,10 @@ async function getAccessToken() {
     const url = usingOldReddit ? 'https://new.reddit.com/r/place/' : 'https://www.reddit.com/r/place/';
     const response = await fetch(url);
     const responseText = await response.text();
-
-    // TODO: ew
     return responseText.split('\"accessToken\":\"')[1].split('"')[0];
 }
 
 async function getCurrentImageUrl(id = '0') {
-
     return new Promise((resolve, reject) => {
         const ws = new WebSocket('wss://gql-realtime-2.reddit.com/query', 'graphql-ws');
 
@@ -305,8 +303,6 @@ async function getCurrentImageUrl(id = '0') {
             const { data } = message;
             const parsed = JSON.parse(data);
 
-            // TODO: ew
-            // Poznámka editora: ew indeed.
             if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
 
             ws.close();
@@ -315,7 +311,6 @@ async function getCurrentImageUrl(id = '0') {
 
         ws.onerror = reject;
     });
-
 }
 
 function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
