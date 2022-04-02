@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot
 // @namespace    https://github.com/PlaceNL/Bot
-// @version      6
+// @version      7
 // @description  De bot voor PlaceNL!
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
@@ -201,6 +201,7 @@ async function attemptPlace() {
 }
 
 function place(x, y, color) {
+    socket.send(JSON.stringify({ type: 'placepixel', x, y, color }));
     return fetch('https://gql-realtime-2.reddit.com/query', {
         method: 'POST',
         body: JSON.stringify({
