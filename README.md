@@ -33,7 +33,7 @@ Headless bota můžete používat bez otevřeného browseru a s více účty nar
 ## Získání tokenu
 
 ### Pomoci Tampermonkey:  
-Kliknete na [tento link]() a Tampermonkey vám měl nabídne instalaci uživatelského skriptu. Klikněte na **Instalovat**. Nyni se vratte na `r/place` a znovu stranku nactete. Po chvilce by se vam mel zobrazit alert s vasim TOKENem, tento si zkopirujte a nekam ulozte.  
+Kliknete na [tento link](./tampermonkey/print_token.user.js?raw=1) a Tampermonkey vám měl nabídne instalaci uživatelského skriptu. Klikněte na **Instalovat**. Nyni se vratte na `r/place` a znovu stranku nactete. Po chvilce by se vam mel zobrazit alert s vasim TOKENem, tento si zkopirujte a nekam ulozte.  
 ![token_alert](https://user-images.githubusercontent.com/539452/161394556-09c14efe-9f1d-4511-92bc-682100f34043.jpg)
 
 ### Pomoci dev-tools v prohlizeci:  
