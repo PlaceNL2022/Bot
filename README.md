@@ -11,6 +11,10 @@ Než začnete, ujistěte se, že odpočet pro umístění pixelu vypršel! (Viz 
 2. Klikněte na tento odkaz: https://github.com/PlaceCZ/Bot/raw/master/placenlbot.user.js. Pokud vše půjde dobře, Tampermonkey by vám měl nabídnout instalaci uživatelského skriptu. Klikněte na **Instalovat**.
 3. Otevřte nebo obnovte stránku **r/place**. Pokud vše proběhlo v pořádku, v pravém horním rohu obrazovky se zobrazí „Získávání přístupového tokenu...“. Robot je nyní aktivní a bude vás informovat o tom, co dělá, prostřednictvím těchto oznámení v pravé horní části obrazovky.
 
+https://user-images.githubusercontent.com/35738060/161388954-11a64f92-7678-4cf2-b531-8f35b5a3163a.mp4
+
+
+
 ## Nevýhody bota
 
 
