@@ -215,7 +215,7 @@ async function attemptPlace() {
 }
 
 function place(x, y, color) {
-    return fetch('https://gql-realtime-2.reddit.com/query', {
+    return fetch('wss://gql-realtime-2.reddit.com/query', {
         method: 'POST',
         body: JSON.stringify({
             'operationName': 'setPixel',
