@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot
 // @namespace    https://github.com/PlaceNL/Bot
-// @version      11
+// @version      12
 // @description  De bot voor PlaceNL!
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
@@ -228,8 +228,8 @@ function place(x, y, color) {
                     'actionName': 'r/replace:set_pixel',
                     'PixelMessageData': {
                         'coordinate': {
-                            'x': x,
-                            'y': y
+                            'x': x % 1000,
+                            'y': y % 1000
                         },
                         'colorIndex': color,
                         'canvasIndex': (x > 999 ? 1 : 0)
