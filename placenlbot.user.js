@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         PlaceNL Bot (Czech Edition)
 // @namespace    https://github.com/PlaceCZ/Bot
-// @version      5
+// @version      8
 // @description  Bot pro PlaceNL, předelán do češtiny
-// @author       NoahvdAa
+// @author       NoahvdAa, GravelCZ, MartinNemi03
 // @match        https://www.reddit.com/r/place/*
 // @match        https://new.reddit.com/r/place/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=reddit.com
@@ -73,6 +73,9 @@ order.sort(() => Math.random() - 0.5);
 
     connectSocket();
     attemptPlace();
+    setInterval(() => {
+        if (socket) socket.send(JSON.stringify({ type: 'ping' }));
+    }, 5000);
 })();
 
 function connectSocket() {
@@ -215,7 +218,7 @@ async function attemptPlace() {
 }
 
 function place(x, y, color) {
-    return fetch('wss://gql-realtime-2.reddit.com/query', {
+    return fetch('https://gql-realtime-2.reddit.com/query', {
         method: 'POST',
         body: JSON.stringify({
             'operationName': 'setPixel',
