@@ -10,7 +10,7 @@ if (args.length !== 1) {
     process.exit(1);
 }
 
-let accessToken = args[0]
+const accessToken = args[0]
 
 let socket;
 let hasOrders = false;
@@ -80,6 +80,7 @@ function connectSocket() {
 
         switch (data.type.toLowerCase()) {
             case 'map':
+                console.debug("data: %j", data)
                 console.log(`Nové příkazy načteny (důvod: ${data.reason ? data.reason : 'Připojeno k serveru'})`)
                 currentOrders = await getMapFromUrl(`https://placecz.martinnemi.me/maps/${data.data}`);
                 hasOrders = true;

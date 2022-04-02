@@ -1,36 +1,28 @@
 // ==UserScript==
-// @name         PlaceNL Bot (Czech Edition)
-// @namespace    https://github.com/PlaceCZ/Bot
-// @version      13
-// @description  Bot pro r/place, puvodem od NL, predelan pro CZ
-// @author       NoahvdAa, GravelCZ, MartinNemi03
+// @name         PlaceNL Bot
+// @namespace    https://github.com/PlaceNL/Bot
+// @version      12
+// @description  De bot voor PlaceNL!
+// @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
 // @match        https://new.reddit.com/r/place/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=reddit.com
 // @require	     https://cdn.jsdelivr.net/npm/toastify-js
 // @resource     TOASTIFY_CSS https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css
-// @updateURL    https://github.com/PlaceCZ/Bot/raw/master/tampermonkey/placenlbot.user.js
-// @downloadURL  https://github.com/PlaceCZ/Bot/raw/master/tampermonkey/placenlbot.user.js
+// @updateURL    https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js
+// @downloadURL  https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js
 // @grant        GM_getResourceText
 // @grant        GM_addStyle
 // ==/UserScript==
 
 // Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
-// Překlad: Omlouváme se za chaotický kód, spěch a čistota nejdou vždy dohromady. ;)
 
-const BACKEND_URL = 'placecz.martinnemi.me'
-const BACKEND_API_WS_URL = `wss://${BACKEND_URL}/api/ws`;
-const BACKEND_API_MAPS = `https://${BACKEND_URL}/maps`
-
-let socket;
-let hasOrders = false;
-let accessToken;
-let currentOrderCanvas = document.createElement('canvas');
-let currentOrderCtx = currentOrderCanvas.getContext('2d');
-let currentPlaceCanvas = document.createElement('canvas');
-
-
-const ORDER = Array.from(Array(200_000).keys()).sort(() => Math.random() - 0.5);
+var socket;
+var hasOrders = false;
+var accessToken;
+var currentOrderCanvas = document.createElement('canvas');
+var currentOrderCtx = currentOrderCanvas.getContext('2d');
+var currentPlaceCanvas = document.createElement('canvas');
 
 const COLOR_MAPPINGS = {
     '#BE0039': 1,
@@ -59,6 +51,11 @@ const COLOR_MAPPINGS = {
     '#FFFFFF': 31
 };
 
+var order = [];
+for (var i = 0; i < 200000; i++) {
+    order.push(i);
+}
+order.sort(() => Math.random() - 0.5);
 
 (async function () {
     GM_addStyle(GM_getResourceText('TOASTIFY_CSS'));
@@ -72,12 +69,12 @@ const COLOR_MAPPINGS = {
     currentPlaceCanvas = document.body.appendChild(currentPlaceCanvas);
 
     Toastify({
-        text: 'Získávám přístupový token...',
+        text: 'Accesstoken ophalen...',
         duration: 10000
     }).showToast();
     accessToken = await getAccessToken();
     Toastify({
-        text: 'Přístupový token obdržen!',
+        text: 'Accesstoken opgehaald!',
         duration: 10000
     }).showToast();
 
@@ -91,24 +88,15 @@ const COLOR_MAPPINGS = {
 
 function connectSocket() {
     Toastify({
-        text: 'Připojuji se na server PlaceCZ',
+        text: 'Verbinden met PlaceNL server...',
         duration: 10000
     }).showToast();
 
-    socket = new WebSocket(BACKEND_API_WS_URL);
-
-    const errorTimeout = setTimeout(() => {
-        Toastify({
-            text: 'Chyba při pokusu o připojení na PlaceCZ server',
-            duration: 10000
-        }).showToast();
-        console.error('Chyba při pokusu o připojení na PlaceCZ server')
-    }, 2000)
+    socket = new WebSocket('wss://placenl.noahvdaa.me/api/ws');
 
     socket.onopen = function () {
-        clearTimeout(errorTimeout);
         Toastify({
-            text: 'Připojeno na server PlaceCZ',
+            text: 'Verbonden met PlaceNL server!',
             duration: 10000
         }).showToast();
         socket.send(JSON.stringify({type: 'getmap'}));
@@ -125,10 +113,10 @@ function connectSocket() {
         switch (data.type.toLowerCase()) {
             case 'map':
                 Toastify({
-                    text: `Nové rozkazy připraveny, duvod: ${data.reason ? data.reason : 'Připojeno se na PlaceCZ'})`,
+                    text: `Nieuwe map geladen (reden: ${data.reason ? data.reason : 'verbonden met server'})`,
                     duration: 10000
                 }).showToast();
-                currentOrderCtx = await getCanvasFromUrl(`${BACKEND_API_MAPS}/${data.data}`, currentOrderCanvas);
+                currentOrderCtx = await getCanvasFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`, currentOrderCanvas);
                 hasOrders = true;
                 break;
             default:
@@ -138,7 +126,7 @@ function connectSocket() {
 
     socket.onclose = function (e) {
         Toastify({
-            text: `Odpojen od PlaceCZ serveru: ${e.reason}`,
+            text: `PlaceNL server heeft de verbinding verbroken: ${e.reason}`,
             duration: 10000
         }).showToast();
         console.error('Socketfout: ', e.reason);
@@ -149,43 +137,40 @@ function connectSocket() {
 
 async function attemptPlace() {
     if (!hasOrders) {
-        setTimeout(attemptPlace, 2000); // try again in 2sec.
+        setTimeout(attemptPlace, 2000); // probeer opnieuw in 2sec.
         return;
     }
-    let ctx;
+    var ctx;
     try {
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0);
         ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0)
     } catch (e) {
-        console.warn('Chyba při načítání mapy: ', e);
+        console.warn('Fout bij ophalen map: ', e);
         Toastify({
-            text: 'Chyba při načítání mapy, zkuste znovu za 10 sekund',
+            text: 'Fout bij ophalen map. Opnieuw proberen in 10 sec...',
             duration: 10000
         }).showToast();
-        setTimeout(attemptPlace, 10000);
+        setTimeout(attemptPlace, 10000); // probeer opnieuw in 10sec.
         return;
     }
 
     const rgbaOrder = currentOrderCtx.getImageData(0, 0, 2000, 1000).data;
     const rgbaCanvas = ctx.getImageData(0, 0, 2000, 1000).data;
 
-    for (const j of ORDER) {
-        for (let l = 0; l < 10; l++) {
-
+    for (const j of order) {
+        for (var l = 0; l < 10; l++) {
             const i = (j * 10) + l;
-
-            // Ignore empty pixels.
+            // ignore empty order pixels.
             if (rgbaOrder[(i * 4) + 3] === 0) continue;
 
             const hex = rgbToHex(rgbaOrder[(i * 4)], rgbaOrder[(i * 4) + 1], rgbaOrder[(i * 4) + 2]);
-
-            // This pixel is correct.
+            //this pixel is correct.
             if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
 
             const x = i % 2000;
             const y = Math.floor(i / 2000);
             Toastify({
-                text: `Pokus o umístění pixelu na ${x}, ${y}...`,
+                text: `Pixel proberen te plaatsen op ${x}, ${y}...`,
                 duration: 10000
             }).showToast();
 
@@ -198,7 +183,7 @@ async function attemptPlace() {
                     const nextPixelDate = new Date(nextPixel);
                     const delay = nextPixelDate.getTime() - Date.now();
                     Toastify({
-                        text: `Příliš brzo umístěný pixel. Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
+                        text: `Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`,
                         duration: delay
                     }).showToast();
                     setTimeout(attemptPlace, delay);
@@ -207,15 +192,15 @@ async function attemptPlace() {
                     const nextPixelDate = new Date(nextPixel);
                     const delay = nextPixelDate.getTime() - Date.now();
                     Toastify({
-                        text: `Pixel položen na ${x}, ${y}! Další pixel bude položen v ${nextPixelDate.toLocaleTimeString()}.`,
+                        text: `Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`,
                         duration: delay
                     }).showToast();
                     setTimeout(attemptPlace, delay);
                 }
             } catch (e) {
-                console.warn('Chyba pří analýze', e);
+                console.warn('Fout bij response analyseren', e);
                 Toastify({
-                    text: `Chyba pří analýze: ${e}.`,
+                    text: `Fout bij response analyseren: ${e}.`,
                     duration: 10000
                 }).showToast();
                 setTimeout(attemptPlace, 10000);
@@ -226,10 +211,10 @@ async function attemptPlace() {
     }
 
     Toastify({
-        text: `Všechny pixely jsou již na správném místě! Zkouším to znovu za 30 sekund...`,
+        text: `Alle pixels staan al op de goede plaats! Opnieuw proberen in 30 sec...`,
         duration: 30000
     }).showToast();
-    setTimeout(attemptPlace, 30000); // try again in 30sec.
+    setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
 }
 
 function place(x, y, color) {
@@ -268,6 +253,8 @@ async function getAccessToken() {
     const url = usingOldReddit ? 'https://new.reddit.com/r/place/' : 'https://www.reddit.com/r/place/';
     const response = await fetch(url);
     const responseText = await response.text();
+
+    // TODO: ew
     return responseText.split('\"accessToken\":\"')[1].split('"')[0];
 }
 
@@ -306,6 +293,7 @@ async function getCurrentImageUrl(id = '0') {
             const {data} = message;
             const parsed = JSON.parse(data);
 
+            // TODO: ew
             if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
 
             ws.close();
@@ -318,8 +306,8 @@ async function getCurrentImageUrl(id = '0') {
 
 function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
     return new Promise((resolve, reject) => {
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
+        var ctx = canvas.getContext('2d');
+        var img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
             ctx.drawImage(img, x, y);
