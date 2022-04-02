@@ -85,7 +85,7 @@ const COLOR_MAPPINGS = {
     attemptPlace();
 
     setInterval(() => {
-        if (socket) socket.send(JSON.stringify({ type: 'ping' }));
+        if (socket) socket.send(JSON.stringify({type: 'ping'}));
     }, 5000);
 })();
 
@@ -111,7 +111,7 @@ function connectSocket() {
             text: 'Připojeno na server PlaceCZ',
             duration: 10000
         }).showToast();
-        socket.send(JSON.stringify({ type: 'getmap' }));
+        socket.send(JSON.stringify({type: 'getmap'}));
     };
 
     socket.onmessage = async function (message) {
@@ -125,7 +125,7 @@ function connectSocket() {
         switch (data.type.toLowerCase()) {
             case 'map':
                 Toastify({
-                    text: `Nové rozkazy připraveny, duvod: ${data.reason ? data.reason : 'Připojte se na PlaceCZ'})`,
+                    text: `Nové rozkazy připraveny, duvod: ${data.reason ? data.reason : 'Připojeno se na PlaceCZ'})`,
                     duration: 10000
                 }).showToast();
                 currentOrderCtx = await getCanvasFromUrl(`${BACKEND_API_MAPS}/${data.data}`, currentOrderCanvas);
@@ -233,7 +233,7 @@ async function attemptPlace() {
 }
 
 function place(x, y, color) {
-    socket.send(JSON.stringify({ type: 'placepixel', x, y, color }));
+    socket.send(JSON.stringify({type: 'placepixel', x, y, color}));
     return fetch('https://gql-realtime-2.reddit.com/query', {
         method: 'POST',
         body: JSON.stringify({
@@ -303,7 +303,7 @@ async function getCurrentImageUrl(id = '0') {
         };
 
         ws.onmessage = (message) => {
-            const { data } = message;
+            const {data} = message;
             const parsed = JSON.parse(data);
 
             if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
