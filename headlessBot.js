@@ -168,7 +168,7 @@ async function attemptPlace() {
     }
     let currentMap;
     try {
-	var canvas1 = await getCurrentImageUrl('0');
+	    var canvas1 = await getCurrentImageUrl('0');
         var canvas2 = await getCurrentImageUrl('1');
         var mapCanvas1 = await getMapFromUrl(canvas1);
         var mapCanvas2 = await getMapFromUrl(canvas2);
@@ -236,11 +236,11 @@ function place(x, y, color, canvasIndex = 0) {
 					'actionName': 'r/replace:set_pixel',
 					'PixelMessageData': {
 						'coordinate': {
-							'x': x,
-							'y': y
+							'x': x % 1000,
+							'y': y % 1000
 						},
 						'colorIndex': color,
-						'canvasIndex': canvasIndex
+						'canvasIndex': (x > 999 ? 1 : 0)
 					}
 				}
 			},
