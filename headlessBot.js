@@ -11,12 +11,12 @@ if (args.length != 1) {
 
 let accessToken = args[0]
 
-var socket;
-var hasOrders = false;
-var currentOrders;
+let socket;
+let hasOrders = false;
+let currentOrders;
 
-var order = [];
-for (var i = 0; i < 200000; i++) {
+const order = [];
+for (let i = 0; i < 200000; i++) {
     order.push(i);
 }
 order.sort(() => Math.random() - 0.5);
@@ -70,7 +70,7 @@ function connectSocket() {
     };
 
     socket.onmessage = async function (message) {
-        var data;
+        let data;
         try {
             data = JSON.parse(message.data);
         } catch (e) {
@@ -101,7 +101,7 @@ async function attemptPlace() {
         setTimeout(attemptPlace, 2000);
         return;
     }
-    var currentMap;
+    let currentMap;
     try {
         currentMap = await getMapFromUrl(await getCurrentImageUrl('0'));
         currentMap = await getMapFromUrl(await getCurrentImageUrl('1'));
