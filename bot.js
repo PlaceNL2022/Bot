@@ -14,7 +14,6 @@ if (args.length != 1 && !process.env.ACCESS_TOKEN) {
 }
 
 let accessToken = process.env.ACCESS_TOKEN || args[0];
-console.log(accessToken)
 
 var socket;
 var order = undefined;
@@ -73,10 +72,8 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
 (async function () {
     currentOrderCanvas.width = 2000;
     currentOrderCanvas.height = 1000;
-    // currentOrderCanvas = document.body.appendChild(currentOrderCanvas);
     currentPlaceCanvas.width = 2000;
     currentPlaceCanvas.height = 1000;
-    // currentPlaceCanvas = document.body.appendChild(currentPlaceCanvas);
 
     connectSocket();
     attemptPlace();
