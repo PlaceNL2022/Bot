@@ -1,12 +1,12 @@
 import fetch from 'node-fetch';
-import getPixels from "get-pixels";
+import getPixels from 'get-pixels';
 import WebSocket from 'ws';
-import ndarray from "ndarray";
+import ndarray from 'ndarray';
 
 const args = process.argv.slice(2);
 
 if (args.length != 1 && !process.env.ACCESS_TOKEN) {
-    console.error("Missing access token.")
+    console.error('Missing access token.');
     process.exit(1);
 }
 
@@ -52,12 +52,12 @@ const COLOR_MAPPINGS = {
 })();
 
 function connectSocket() {
-    console.log('Verbinden met PlaceNL server...')
+    console.log('Connectring with PlaceTUD server...')
 
-    socket = new WebSocket('wss://placenl.noahvdaa.me/api/ws');
+    socket = new WebSocket('wss://placetud.yanick.gay/api/ws');
 
     socket.onopen = function () {
-        console.log('Verbonden met PlaceNL server!')
+        console.log('Connected with PlaceTUD server!')
         socket.send(JSON.stringify({ type: 'getmap' }));
     };
 
@@ -71,8 +71,8 @@ function connectSocket() {
 
         switch (data.type.toLowerCase()) {
             case 'map':
-                console.log(`Nieuwe map geladen (reden: ${data.reason ? data.reason : 'verbonden met server'})`)
-                currentOrders = await getMapFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`);
+                console.log(`New map loaded (reason: ${data.reason ? data.reason : 'connected to server'})`)
+                currentOrders = await getMapFromUrl(`https://placetud.yanick.gay/maps/${data.data}`);
                 hasOrders = true;
                 break;
             default:
@@ -81,8 +81,8 @@ function connectSocket() {
     };
 
     socket.onclose = function (e) {
-        console.warn(`PlaceNL server heeft de verbinding verbroken: ${e.reason}`)
-        console.error('Socketfout: ', e.reason);
+        console.warn(`PlaceTUD Server has broken the connection: ${e.reason}`)
+        console.error('Socket error: ', e.reason);
         socket.close();
         setTimeout(connectSocket, 1000);
     };
@@ -90,7 +90,7 @@ function connectSocket() {
 
 async function attemptPlace() {
     if (!hasOrders) {
-        setTimeout(attemptPlace, 2000); // probeer opnieuw in 2sec.
+        setTimeout(attemptPlace, 2000);
         return;
     }
     var currentMap;
@@ -98,8 +98,9 @@ async function attemptPlace() {
         const canvasUrl = await getCurrentImageUrl();
         currentMap = await getMapFromUrl(canvasUrl);
     } catch (e) {
-        console.warn('Fout bij ophalen map: ', e);
-        setTimeout(attemptPlace, 15000); // probeer opnieuw in 15sec.
+        console.warn('Error loding map: ', e);
+        console.log('Trying again in 10 seconds...');
+        setTimeout(attemptPlace, 15000);
         return;
     }
 
@@ -107,16 +108,16 @@ async function attemptPlace() {
     const rgbaCanvas = currentMap.data;
 
     for (const i of order) {
-        // negeer lege order pixels.
+        // Ignore empty order pixels
         if (rgbaOrder[(i * 4) + 3] === 0) continue;
 
         const hex = rgbToHex(rgbaOrder[(i * 4)], rgbaOrder[(i * 4) + 1], rgbaOrder[(i * 4) + 2]);
-        // Deze pixel klopt.
+        // This pixel is correct
         if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
 
         const x = i % 1000;
         const y = Math.floor(i / 1000);
-        console.log(`Pixel proberen te plaatsen op ${x}, ${y}...`)
+        console.log(`Pixel try to place on ${x}, ${y}...`)
 
         const res = await place(x, y, COLOR_MAPPINGS[hex]);
         const data = await res.json();
@@ -126,30 +127,30 @@ async function attemptPlace() {
                 const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
                 const nextPixelDate = new Date(nextPixel);
                 const delay = nextPixelDate.getTime() - Date.now();
-                console.log(`Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
+                console.log(`Pixel placed too quickly! Next pixel is set to ${nextPixelDate.toLocaleTimeString()}.`);
                 setTimeout(attemptPlace, delay);
             } else {
                 const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
                 const nextPixelDate = new Date(nextPixel);
                 const delay = nextPixelDate.getTime() - Date.now();
-                console.log(`Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
+                console.log(`Pixel placed on ${x}, ${y}! Next pixel is set to ${nextPixelDate.toLocaleTimeString()}.`);
                 setTimeout(attemptPlace, delay);
             }
         } catch (e) {
-            console.warn('Fout bij response analyseren', e);
+            console.warn('Error reading responce', e);
             setTimeout(attemptPlace, 10000);
         }
 
         return;
     }
 
-    console.log(`Alle pixels staan al op de goede plaats! Opnieuw proberen in 30 sec...`)
-    setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
+    console.log(`All pixels are already in the right place! Try again in 30 seconds ...`)
+    setTimeout(attemptPlace, 30000);
 }
 
 function place(x, y, color) {
     socket.send(JSON.stringify({ type: 'placepixel', x, y, color }));
-    console.log("Placing pixel at (" + x + ", " + y + ") with color: " + color)
+    console.log('Placing pixel at (' + x + ', ' + y + ') with color: ' + color)
 	return fetch('https://gql-realtime-2.reddit.com/query', {
 		method: 'POST',
 		body: JSON.stringify({
@@ -183,8 +184,8 @@ async function getCurrentImageUrl() {
 	return new Promise((resolve, reject) => {
 		const ws = new WebSocket('wss://gql-realtime-2.reddit.com/query', 'graphql-ws', {
         headers : {
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0",
-            "Origin": "https://hot-potato.reddit.com"
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0',
+            'Origin': 'https://hot-potato.reddit.com'
         }
       });
 
@@ -220,7 +221,6 @@ async function getCurrentImageUrl() {
 			const { data } = message;
 			const parsed = JSON.parse(data);
 
-			// TODO: ew
 			if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
 
 			ws.close();
@@ -236,16 +236,16 @@ function getMapFromUrl(url) {
     return new Promise((resolve, reject) => {
         getPixels(url, function(err, pixels) {
             if(err) {
-                console.log("Bad image path")
+                console.log('Bad image path')
                 reject()
                 return
             }
-            console.log("got pixels", pixels.shape.slice())
+            console.log('got pixels', pixels.shape.slice())
             resolve(pixels)
         })
     });
 }
 
 function rgbToHex(r, g, b) {
-	return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
 }
