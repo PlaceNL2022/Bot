@@ -61,33 +61,23 @@ const COLOR_MAPPINGS = {
 	attemptPlace();
 })();
 
-
-function getWork() {
-	const pixel = placeOrders
-		.map(it => it.pixel)
-		.flat()
-	shuffle(pixel)
-	return pixel
-}
-
-// from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
-function shuffle(array) {
-	let currentIndex = array.length,  randomIndex;
-
-	// While there remain elements to shuffle...
-	while (currentIndex != 0) {
-
-		// Pick a remaining element...
-		randomIndex = Math.floor(Math.random() * currentIndex);
-		currentIndex--;
-
-		// And swap it with the current element.
-		[array[currentIndex], array[randomIndex]] = [
-			array[randomIndex], array[currentIndex]];
+function shuffleWeighted(array) {
+	for (const item of array) {
+		item.rndPriority = Math.round(item.priority * Math.random());
 	}
-
-	return array;
+	array.sort((a, b) => b.rndPriority - a.rndPriority);
 }
+
+function getPixelList() {
+	const structures = [];
+	for (const structureName in placeOrders.structures) {
+		shuffleWeighted(placeOrders.structures[structureName].pixels);
+		structures.push(placeOrders.structures[structureName]);
+	}
+	shuffleWeighted(structures);
+	return structures.map(structure => structure.pixels).flat();
+}
+
 async function attemptPlace() {
 	var ctx;
 	try {
@@ -103,15 +93,17 @@ async function attemptPlace() {
 		return;
 	}
 
-	for (const order of getWork()) {
-		const x = order[0];
-		const y = order[1];
-		const colorId = COLOR_MAPPINGS[order[2]] ?? order[2]
+	const pixelList = getPixelList();
+
+	for (const order of pixelList) {
+		const x = order.x;
+		const y = order.y;
+		const colorId = COLOR_MAPPINGS[order.color] ?? order.color;
 
 		const rgbaAtLocation = ctx.getImageData(x, y, 1, 1).data;
 		const hex = rgbToHex(rgbaAtLocation[0], rgbaAtLocation[1], rgbaAtLocation[2]);
 		const currentColorId = COLOR_MAPPINGS[hex];
-		// Deze pixel klopt al.
+		// Pixel already set
 		if (currentColorId == colorId) continue;
 
 		Toastify({
@@ -136,13 +128,18 @@ async function attemptPlace() {
 }
 
 function updateOrders() {
-	fetch('https://placenl.github.io/Orders/orders.json').then(async (response) => {
+	fetch('https://placede.github.io/pixel/pixel.json').then(async (response) => {
 		if (!response.ok) return console.warn('Bestellungen können nicht geladen werden!');
 		const data = await response.json();
 
 		if (JSON.stringify(data) !== JSON.stringify(placeOrders)) {
+			const structureCount = Object.keys(data.structures).length;
+			let pixelCount = 0;
+			for (const structureName in data.structures) {
+				pixelCount += data.structures[structureName].pixels.length;
+			}
 			Toastify({
-				text: `Neue Bestellungen geladen. Gesamtanzahl: ${data.length}.`,
+				text: `Neue Strukturen geladen. Bilder: ${structureCount} - Pixels: ${pixelCount}.`,
 				duration: 10000
 			}).showToast();
 		}
