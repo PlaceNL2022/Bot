@@ -12,7 +12,9 @@ if (args.length != 1) {
 
 let accessToken = args[0]
 
-var placeOrders = [];
+var socket;
+var hasOrders = false;
+var currentOrders;
 
 const COLOR_MAPPINGS = {
 	'#FF4500': 2,
@@ -34,55 +36,104 @@ const COLOR_MAPPINGS = {
 };
 
 (async function () {
-	setInterval(updateOrders, 5 * 60 * 1000); // Update orders elke vijf minuten.
-	await updateOrders();
-	attemptPlace();
+	connectSocket();
+    attemptPlace();
 })();
 
-async function attemptPlace() {
-	var currentMap;
-	try {
-		const canvasUrl = await getCurrentImageUrl();
-        currentMap = await getCurrentMap(canvasUrl);
-	} catch (e) {
-		console.warn('Fout bij ophalen map: ', e);
-		setTimeout(attemptPlace, 15000); // probeer opnieuw in 15sec.
-		return;
-	}
+function connectSocket() {
+    console.log('Verbinden met PlaceNL server...')
 
-	for (const order of placeOrders) {
-		const x = order[0];
-		const y = order[1];
-		const colorId = order[2];
-		const rgbaAtLocation = getColorOnMap(currentMap, x, y)
-		const hex = rgbToHex(rgbaAtLocation[0], rgbaAtLocation[1], rgbaAtLocation[2]);
-		const currentColorId = COLOR_MAPPINGS[hex];
-		// Deze pixel klopt al.
-		if (currentColorId == colorId) continue;
+    socket = new WebSocket('wss://placenl.noahvdaa.me/api/ws');
 
-		console.log(`Pixel proberen te plaatsen op ${x}, ${y}...`)
-		await place(x, y, colorId);
+    socket.onopen = function () {
+        console.log('Verbonden met PlaceNL server!')
+        socket.send(JSON.stringify({ type: 'getmap' }));
+    };
 
-		console.log(`Wachten op cooldown...`)
-		setTimeout(attemptPlace, 315000); // 5min en 15sec, just to be safe.
-		return;
-	}
+    socket.onmessage = async function (message) {
+        var data;
+        try {
+            data = JSON.parse(message.data);
+        } catch (e) {
+            return;
+        }
 
-	console.log('Alle pixels staan al op de goede plaats!')
-	setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
+        switch (data.type.toLowerCase()) {
+            case 'map':
+                console.log(`Nieuwe map geladen (reden: ${data.reason ? data.reason : 'verbonden met server'})`)
+                currentOrders = await getMapFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`);
+                hasOrders = true;
+                break;
+            default:
+                break;
+        }
+    };
+
+    socket.onclose = function (e) {
+        console.warn(`PlaceNL server heeft de verbinding verbroken: ${e.reason}`)
+        console.error('Socketfout: ', e.reason);
+        socket.close();
+        setTimeout(connectSocket, 1000);
+    };
 }
 
-function updateOrders() {
-	fetch('https://placenl.github.io/Orders/orders.json').then(async (response) => {
-		if (!response.ok) return console.warn('Kan orders niet ophalen! (non-ok status code)');
-		const data = await response.json();
+async function attemptPlace() {
+    if (!hasOrders) {
+        setTimeout(attemptPlace, 2000); // probeer opnieuw in 2sec.
+        return;
+    }
+    var currentMap;
+    try {
+        const canvasUrl = await getCurrentImageUrl();
+        currentMap = await getMapFromUrl(canvasUrl);
+    } catch (e) {
+        console.warn('Fout bij ophalen map: ', e);
+        setTimeout(attemptPlace, 15000); // probeer opnieuw in 15sec.
+        return;
+    }
 
-		if (JSON.stringify(data) !== JSON.stringify(placeOrders)) {
-			console.log(`Nieuwe orders geladen. Totaal aantal pixels: ${data.length}.`)
-		}
+    const rgbaOrder = currentOrders.data;
+    const rgbaCanvas = currentMap.data;
 
-		placeOrders = data;
-	}).catch((e) => console.warn('Kan orders niet ophalen!', e));
+    for (var i = 0; i < 1000000; i++) {
+        // negeer lege order pixels.
+        if (rgbaOrder[(i * 4) + 3] === 0) continue;
+
+        const hex = rgbToHex(rgbaOrder[(i * 4)], rgbaOrder[(i * 4) + 1], rgbaOrder[(i * 4) + 2]);
+        // Deze pixel klopt.
+        if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
+
+        const x = i % 1000;
+        const y = Math.floor(i / 1000);
+        console.log(`Pixel proberen te plaatsen op ${x}, ${y}...`)
+
+        const res = await place(x, y, COLOR_MAPPINGS[hex]);
+        const data = await res.json();
+        try {
+            if (data.errors) {
+                const error = data.errors[0];
+                const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
+                const nextPixelDate = new Date(nextPixel);
+                const delay = nextPixelDate.getTime() - Date.now();
+                console.log(`Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
+                setTimeout(attemptPlace, delay);
+            } else {
+                const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
+                const nextPixelDate = new Date(nextPixel);
+                const delay = nextPixelDate.getTime() - Date.now();
+                console.log(`Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
+                setTimeout(attemptPlace, delay);
+            }
+        } catch (e) {
+            console.warn('Fout bij response analyseren', e);
+            setTimeout(attemptPlace, 10000);
+        }
+
+        return;
+    }
+
+    console.log(`Alle pixels staan al op de goede plaats! Opnieuw proberen in 30 sec...`)
+    setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
 }
 
 function place(x, y, color) {
@@ -169,21 +220,7 @@ async function getCurrentImageUrl() {
 	});
 }
 
-function getCanvasFromUrl(url) {
-	return new Promise((resolve, reject) => {
-		var ctx = canvas.getContext('2d');
-		var img = new Image();
-		img.crossOrigin = 'anonymous';
-		img.onload = () => {
-			ctx.drawImage(img, 0, 0);
-			resolve(ctx);
-		};
-		img.onerror = reject;
-		img.src = url;
-	});
-}
-
-function getCurrentMap(url) {
+function getMapFromUrl(url) {
     return new Promise((resolve, reject) => {
         getPixels(url, function(err, pixels) {
             if(err) {
@@ -195,11 +232,6 @@ function getCurrentMap(url) {
             resolve(pixels)
         })
     });
-}
-
-function getColorOnMap(map, x, y) {
-    let data = map.pick(x, y, null)
-    return data
 }
 
 function rgbToHex(r, g, b) {
