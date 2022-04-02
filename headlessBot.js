@@ -16,34 +16,42 @@ var hasOrders = false;
 var currentOrders;
 
 var order = [];
-for (var i = 0; i < 1000000; i++) {
+for (var i = 0; i < 200000; i++) {
     order.push(i);
 }
 order.sort(() => Math.random() - 0.5);
 
 
 const COLOR_MAPPINGS = {
-	'#FF4500': 2,
-	'#FFA800': 3,
-	'#FFD635': 4,
-	'#00A368': 6,
-	'#7EED56': 8,
-	'#2450A4': 12,
-	'#3690EA': 13,
-	'#51E9F4': 14,
-	'#811E9F': 18,
-	'#B44AC0': 19,
-	'#FF99AA': 23,
-	'#9C6926': 25,
-	'#000000': 27,
-	'#898D90': 29,
-	'#D4D7D9': 30,
-	'#FFFFFF': 31
+    '#BE0039': 1,
+    '#FF4500': 2,
+    '#FFA800': 3,
+    '#FFD635': 4,
+    '#00A368': 6,
+    '#00CC78': 7,
+    '#7EED56': 8,
+    '#00756F': 9,
+    '#009EAA': 10,
+    '#2450A4': 12,
+    '#3690EA': 13,
+    '#51E9F4': 14,
+    '#493AC1': 15,
+    '#6A5CFF': 16,
+    '#811E9F': 18,
+    '#B44AC0': 19,
+    '#FF3881': 22,
+    '#FF99AA': 23,
+    '#6D482F': 24,
+    '#9C6926': 25,
+    '#000000': 27,
+    '#898D90': 29,
+    '#D4D7D9': 30,
+    '#FFFFFF': 31
 };
 
 (async function () {
-	connectSocket();
-  attemptPlace();
+    connectSocket();
+    attemptPlace();
 
   setInterval(() => {
     if (socket) socket.send(JSON.stringify({ type: 'ping' }));
@@ -95,8 +103,8 @@ async function attemptPlace() {
     }
     var currentMap;
     try {
-        const canvasUrl = await getCurrentImageUrl();
-        currentMap = await getMapFromUrl(canvasUrl);
+        currentMap = await getMapFromUrl(getCurrentImageUrl('0'));
+        currentMap = await getMapFromUrl(getCurrentImageUrl('1'));
     } catch (e) {
         console.warn('Chyba při načítání momentálního canvasu: ', e);
         setTimeout(attemptPlace, 15000);
@@ -146,7 +154,7 @@ async function attemptPlace() {
     setTimeout(attemptPlace, 30000);
 }
 
-function place(x, y, color) {
+function place(x, y, color, canvasIndex = 0) {
   socket.send(JSON.stringify({ type: 'placepixel', x, y, color }));
   console.log("Placing pixel at (" + x + ", " + y + ") with color: " + color)
 	return fetch('https://gql-realtime-2.reddit.com/query', {
@@ -162,7 +170,7 @@ function place(x, y, color) {
 							'y': y
 						},
 						'colorIndex': color,
-						'canvasIndex': 0
+						'canvasIndex': canvasIndex
 					}
 				}
 			},
@@ -178,7 +186,7 @@ function place(x, y, color) {
 	});
 }
 
-async function getCurrentImageUrl() {
+async function getCurrentImageUrl(index = '0') {
 	return new Promise((resolve, reject) => {
 		const ws = new WebSocket('wss://gql-realtime-2.reddit.com/query', 'graphql-ws', {
         headers : {
@@ -204,7 +212,7 @@ async function getCurrentImageUrl() {
 							'channel': {
 								'teamOwner': 'AFD2022',
 								'category': 'CANVAS',
-								'tag': '0'
+								'tag': index
 							}
 						}
 					},
@@ -223,7 +231,7 @@ async function getCurrentImageUrl() {
 			if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
 
 			ws.close();
-			resolve(parsed.payload.data.subscribe.data.name);
+			resolve(parsed.payload.data.subscribe.data.name + `?noCache=${Date.now() * Math.random()}`);
 		}
 
 
