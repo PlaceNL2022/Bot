@@ -116,7 +116,7 @@ function connectSocket() {
                     text: `New map loaded (reason: ${data.reason ? data.reason : 'connected to server'})`,
                     duration: 10000
                 }).showToast();
-                currentOrderCtx = await getCanvasFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`, currentOrderCanvas); // TODO: Change uwurl
+                currentOrderCtx = await getCanvasFromUrl(`https://placetud.yanick.gay/maps/${data.data}`, currentOrderCanvas); // TODO: Change uwurl
                 hasOrders = true;
                 break;
             default:
