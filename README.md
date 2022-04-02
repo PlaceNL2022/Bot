@@ -1,27 +1,27 @@
-# PlaceNL Bot
+# PlaceTUD Bot
 
-De bot voor PlaceNL! Deze bot verbindt met de [commando server](https://github.com/PlaceNL/Commando) en krijgt daar order van. De ordergeschiedenis kan je [hier](https://placenl.noahvdaa.me/) bekijken.
+Bot von PlaceNL auf TUDisch! The bot connects to the [Commander server](https://github.com/PlaceTUD/Commander) and obtains orders from it. You can view the order history [here](https://placetud.yanick.gay/).
 
 ## User script bot
 
-### Installatieinstructies
+### Install routine
 
-Voordat je begint, zorg dat je pixel wachttijd is verlopen!
+Before you start, make sure your pixel place cooldown has expired!
 
-1. Installeer de [Tampermonkey](https://www.tampermonkey.net/) browserextensie.
-2. Klik op deze link: [https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js](https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js). Als het goed is zal Tampermonkey je moeten aanbieden om een userscript te installeren. Klik op **Install**.
-3. Herlaad je **r/place** tabblad. Als alles goed is gegaan, zie je "Accesstoken ophalen..." rechtsbovenin je scherm. De bot is nu actief, en zal je via deze meldingen rechtsbovenin je scherm op de hoogte houden van wat 'ie doet.
+1. Install the [Tampermonkey](https://www.tampermonkey.net/) browser extension.
+2. Click on this link: [https://raw.githubusercontent.com/PlaceTUD/Soldat/master/placenlbot.user.js](https://raw.githubusercontent.com/PlaceTUD/Soldat/master/placenlbot.user.js). If all goes well, Tampermonkey should offer you to install a userscript. Click on **Install**.
+3. Reload your **r/place** tab. If everything went well, you'll see "Get access token..." at the top right of your screen. The bot is now active, and will keep you informed of what it is doing via these notifications at the top right of your screen.
 
-### Nadelen van deze bot
+### Disadvantages of this bot
 
-- Wanneer de bot een pixel plaatst, ziet het er voor jezelf uit alsof je nog steeds een pixel kunt plaatsen, terwijl de bot dit al voor je heeft gedaan (en je dus in de 5 minuten cooldown zit). De cooldown wordt daarom rechtsbovenin je scherm weergegeven.
+- When the bot places a pixel, it appears that you can still place a pixel, when the bot has already done this for you (so you are in the 5 minute cooldown). The cooldown is therefore displayed at the top right of your screen.
 
 ## Headless bot
 
-### Je access token verkrijgen
-1. Ga naar [r/place](https://www.reddit.com/r/place/)
-2. Open de browser console (F12/Element inspecteren -> Click op console)
-3. Plak de volgende code en druk op enter:
+### Obtain your access token
+1. Go to [r/place](https://www.reddit.com/r/place/)
+2. Open the browser console (F12/Inspect element -> Click on console)
+3. Paste the following code and press enter:
 ```
 async function getAccessToken() {
 	const usingOldReddit = window.location.href.includes('new.reddit.com');
@@ -34,17 +34,17 @@ async function getAccessToken() {
 
 await getAccessToken()
 ```
-4. De tekst tussen de quotes (`"`) is je access token.
+4. The text between the quotes (`"`) is your access token.
 
-### Installatieinstructies
+### Install routine
 
-1. Installeer [NodeJS](https://nodejs.org/).
-2. Download de bot via [deze link](https://github.com/PlaceNL/Bot/archive/refs/heads/master.zip).
-3. Pak de bot uit naar een folder ergens op je computer.
-4. Open een command prompt/terminal in deze folder
-    Windows: Shift+Rechter muis knop in de folder -> Click op "Powershell hier openen"
-    Mac: Echt geen idee. Sorry!
-    Linux: Niet echt nodig toch?
-5. Installeer de nodige depdendencies met `npm i`
-6. Voor de bot uit met `node bot.js ACCESS_TOKEN_HIER`
-7. BONUS: Je kunt de laatse twee stappen zo vaak doen als je wil voor extra accounts. Let wel op dat je andere accounts gebruikt anders heeft het niet heel veel zin.
+1. Install [NodeJS](https://nodejs.org/).
+2. Download the bot from [this link](https://github.com/PlaceNL/Bot/archive/refs/heads/master.zip).
+3. Extract the bot to a folder somewhere on your computer.
+4. Open a command prompt/terminal in this folder
+     Windows: Shift + Right mouse button in the folder -> Click on "Open Powershell here"
+     Mac: Really no idea. Sorry!
+     Linux: Not really necessary, right?
+5. Install the necessary depdendencies with `npm i`
+6. Execute the bot using `node bot.js ACCESS_TOKEN_HERE`
+7. BONUS: You can do the last two steps as many times as you want for additional accounts. Make sure you use other accounts otherwise it won't make much sense.
