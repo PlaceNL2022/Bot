@@ -1,4 +1,4 @@
-const VERSION = 1;
+const VERSION = 2;
 import fetch from 'node-fetch';
 import getPixels from "get-pixels";
 import WebSocket from 'ws';
@@ -107,12 +107,14 @@ function checkVersion() {
                             });
                     } else {
                         console.log("PlaceCZ Headless V" + VERSION);
+                        resolve();
                     }
                 } catch (e) {
                     console.error(
                         "Nepodařilo se získat nejnovější verzi. Budeme pokračovat s verzí " +
                             VERSION
                     );
+                    resolve();
                 }
             });
     })
