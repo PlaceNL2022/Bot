@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot
 // @namespace    https://github.com/PlaceNL/Bot
-// @version      16
+// @version      17
 // @description  De bot voor PlaceNL!
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
@@ -117,7 +117,7 @@ function connectSocket() {
             duration: 10000
         }).showToast();
         socket.send(JSON.stringify({ type: 'getmap' }));
-        socket.send(JSON.stringify({ type: 'brand', brand: 'userscriptV16' }));
+        socket.send(JSON.stringify({ type: 'brand', brand: 'userscriptV17' }));
     };
 
     socket.onmessage = async function (message) {
