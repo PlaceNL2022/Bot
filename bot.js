@@ -256,6 +256,10 @@ async function getCurrentImageUrl(id = '0') {
 			const { data } = message;
 			const parsed = JSON.parse(data);
 
+            if (parsed.type === 'connection_error') {
+                console.error(`[!!] Kon /r/place map niet laden: ${parsed.payload.message}. Is de access token niet meer geldig?`);
+            }
+
 			// TODO: ew
 			if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
 
