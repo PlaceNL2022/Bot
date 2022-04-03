@@ -33,33 +33,41 @@ var currentOrders;
 var currentOrderList;
 
 const COLOR_MAPPINGS = {
-	'#BE0039': 1,
+    '#6D001A': 0,
+    '#BE0039': 1,
     '#FF4500': 2,
     '#FFA800': 3,
     '#FFD635': 4,
+    '#FFF8B8': 5,
     '#00A368': 6,
     '#00CC78': 7,
     '#7EED56': 8,
     '#00756F': 9,
     '#009EAA': 10,
+    '#00CCC0': 11,
     '#2450A4': 12,
     '#3690EA': 13,
     '#51E9F4': 14,
     '#493AC1': 15,
     '#6A5CFF': 16,
+    '#94B3FF': 17,
     '#811E9F': 18,
     '#B44AC0': 19,
+    '#E4ABFF': 20,
+    '#DE107F': 21,
     '#FF3881': 22,
     '#FF99AA': 23,
     '#6D482F': 24,
     '#9C6926': 25,
+    '#FFB470': 26,
     '#000000': 27,
+    '#515252': 28,
     '#898D90': 29,
     '#D4D7D9': 30,
     '#FFFFFF': 31
 };
 
-let rgbaJoin = (a1, a2, rowSize = 1000, cellSize = 4) => {
+let rgbaJoinH = (a1, a2, rowSize = 1000, cellSize = 4) => {
     const rawRowSize = rowSize * cellSize;
     const rows = a1.length / rawRowSize;
     let result = new Uint8Array(a1.length + a2.length);
@@ -70,9 +78,29 @@ let rgbaJoin = (a1, a2, rowSize = 1000, cellSize = 4) => {
     return result;
 };
 
+let rgbaJoinV = (a1, a2, rowSize = 2000, cellSize = 4) => {
+    let result = new Uint8Array(a1.length + a2.length);
+
+    const rawRowSize = rowSize * cellSize;
+
+    const rows1 = a1.length / rawRowSize;
+
+    for (var row = 0; row < rows1; row++) {
+        result.set(a1.slice(rawRowSize * row, rawRowSize * (row+1)), rawRowSize * row);
+    }
+
+    const rows2 = a2.length / rawRowSize;
+
+    for (var row = 0; row < rows2; row++) {
+        result.set(a2.slice(rawRowSize * row, rawRowSize * (row+1)), (rawRowSize * row) + a1.length);
+    }
+
+    return result;
+};
+
 let getRealWork = rgbaOrder => {
     let order = [];
-    for (var i = 0; i < 2000000; i++) {
+    for (var i = 0; i < 4000000; i++) {
         if (rgbaOrder[(i * 4) + 3] !== 0) {
             order.push(i);
         }
@@ -191,9 +219,13 @@ async function attemptPlace(accessToken) {
     
     var map0;
     var map1;
+    var map2;
+    var map3;
     try {
-        map0 = await getMapFromUrl(await getCurrentImageUrl('0'))
+        map0 = await getMapFromUrl(await getCurrentImageUrl('0'));
         map1 = await getMapFromUrl(await getCurrentImageUrl('1'));
+        map2 = await getMapFromUrl(await getCurrentImageUrl('2'));
+        map3 = await getMapFromUrl(await getCurrentImageUrl('3'));
     } catch (e) {
         console.warn('Fout bij ophalen map: ', e);
         setTimeout(retry, 15000); // probeer opnieuw in 15sec.
@@ -201,7 +233,9 @@ async function attemptPlace(accessToken) {
     }
 
     const rgbaOrder = currentOrders.data;
-    const rgbaCanvas = rgbaJoin(map0.data, map1.data);
+    const rgbaCanvasH0 = rgbaJoinH(map0.data, map1.data);
+    const rgbaCanvasH1 = rgbaJoinH(map2.data, map3.data);
+    const rgbaCanvas = rgbaJoinV(rgbaCanvasH0, rgbaCanvasH1);
     const work = getPendingWork(currentOrderList, rgbaOrder, rgbaCanvas);
 
     if (work.length === 0) {
@@ -263,7 +297,7 @@ function place(x, y, color, accessToken = defaultAccessToken) {
 							'y': y % 1000
 						},
 						'colorIndex': color,
-						'canvasIndex': (x > 999 ? 1 : 0)
+						'canvasIndex': getCanvas(x, y)
 					}
 				}
 			},
@@ -347,6 +381,14 @@ function getMapFromUrl(url) {
             resolve(pixels)
         })
     });
+}
+
+function getCanvas(x, y) {
+    if (x <= 999) {
+        return y <= 999 ? 0 : 2;
+    } else {
+        return y <= 999 ? 1 : 3;
+    }
 }
 
 function rgbToHex(r, g, b) {
