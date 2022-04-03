@@ -1,7 +1,6 @@
 import fetch from 'node-fetch';
 import getPixels from "get-pixels";
 import WebSocket from 'ws';
-import ndarray from "ndarray";
 
 const args = process.argv.slice(2);
 
