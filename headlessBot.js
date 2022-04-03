@@ -184,13 +184,13 @@ async function attemptPlace() {
     }
 
     const rgbaOrder = currentOrders.data;
-    const map = new Uint8Array(2000000);
+    const map = new Uint8Array(8000000);
     for (let y = 0; y < 1000; y++){
-        for (let i = 0; i < 1000; i++) {
-            map[(2000*y)+i] = map0.data[(2000*y)+i];
+        for (let i = 0; i < (1000*4); i++) {
+            map[(8000*y)+i] = map0.data[(8000*y)+i];
         }
-        for (let i = 0; i < 1000; i++) {
-            map[(2000*y)+(1000+i)] = map1.data[(2000*y)+i];
+        for (let i = 0; i < (1000*4); i++) {
+            map[(8000*y)+(4000+i)] = map1.data[(8000*y)+i];
         }
     }
     const rgbaCanvas = map;
