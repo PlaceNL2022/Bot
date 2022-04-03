@@ -13,15 +13,8 @@ if (args.length != 1 && !process.env.ACCESS_TOKEN) {
 let accessToken = process.env.ACCESS_TOKEN || args[0];
 
 var socket;
-var hasOrders = false;
 var currentOrders;
-
-var order = [];
-for (var i = 0; i < 2000000; i++) {
-    order.push(i);
-}
-order.sort(() => Math.random() - 0.5);
-
+var currentOrderList;
 
 const COLOR_MAPPINGS = {
 	'#BE0039': 1,
@@ -61,6 +54,26 @@ let rgbaJoin = (a1, a2, rowSize = 1000, cellSize = 4) => {
     return result;
 };
 
+let getRealWork = rgbaOrder => {
+    let order = [];
+    for (var i = 0; i < 2000000; i++) {
+        if (rgbaOrder[(i * 4) + 3] !== 0) {
+            order.push(i);
+        }
+    }
+    return order;
+};
+
+let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
+    let pendingWork = [];
+    for (const i of work) {
+        if (rgbaOrderToHex(i, rgbaOrder) !== rgbaOrderToHex(i, rgbaCanvas)) {
+            pendingWork.push(i);
+        }
+    }
+    return pendingWork;
+};
+
 (async function () {
 	connectSocket();
     attemptPlace();
@@ -96,7 +109,7 @@ function connectSocket() {
             case 'map':
                 console.log(`Nieuwe map geladen (reden: ${data.reason ? data.reason : 'verbonden met server'})`)
                 currentOrders = await getMapFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`);
-                hasOrders = true;
+                currentOrderList = getRealWork(currentOrders.data);
                 break;
             default:
                 break;
@@ -112,7 +125,7 @@ function connectSocket() {
 }
 
 async function attemptPlace() {
-    if (!hasOrders) {
+    if (currentOrderList === undefined) {
         setTimeout(attemptPlace, 2000); // probeer opnieuw in 2sec.
         return;
     }
@@ -130,46 +143,44 @@ async function attemptPlace() {
 
     const rgbaOrder = currentOrders.data;
     const rgbaCanvas = rgbaJoin(map0.data, map1.data);
+    const work = getPendingWork(currentOrderList, rgbaOrder, rgbaCanvas);
 
-    for (const i of order) {
-        // negeer lege order pixels.
-        if (rgbaOrder[(i * 4) + 3] === 0) continue;
-
-        const hex = rgbToHex(rgbaOrder[(i * 4)], rgbaOrder[(i * 4) + 1], rgbaOrder[(i * 4) + 2]);
-        // Deze pixel klopt.
-        if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) continue;
-
-        const x = i % 2000;
-        const y = Math.floor(i / 2000);
-        console.log(`Pixel proberen te plaatsen op ${x}, ${y}...`)
-
-        const res = await place(x, y, COLOR_MAPPINGS[hex]);
-        const data = await res.json();
-        try {
-            if (data.errors) {
-                const error = data.errors[0];
-                const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
-                const nextPixelDate = new Date(nextPixel);
-                const delay = nextPixelDate.getTime() - Date.now();
-                console.log(`Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
-                setTimeout(attemptPlace, delay);
-            } else {
-                const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
-                const nextPixelDate = new Date(nextPixel);
-                const delay = nextPixelDate.getTime() - Date.now();
-                console.log(`Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
-                setTimeout(attemptPlace, delay);
-            }
-        } catch (e) {
-            console.warn('Fout bij response analyseren', e);
-            setTimeout(attemptPlace, 10000);
-        }
-
+    if (work.length === 0) {
+        console.log(`Alle pixels staan al op de goede plaats! Opnieuw proberen in 30 sec...`);
+        setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
         return;
     }
 
-    console.log(`Alle pixels staan al op de goede plaats! Opnieuw proberen in 30 sec...`)
-    setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
+    const percentComplete = 100 - Math.ceil(work.length * 100 / currentOrderList.length);
+    const idx = Math.floor(Math.random() * work.length);
+    const i = work[idx];
+    const x = i % 2000;
+    const y = Math.floor(i / 2000);
+    const hex = rgbaOrderToHex(i, rgbaOrder);
+
+    console.log(`Proberen pixel te plaatsen op ${x}, ${y}... (${percentComplete}% compleet)`);
+
+    const res = await place(x, y, COLOR_MAPPINGS[hex]);
+    const data = await res.json();
+    try {
+        if (data.errors) {
+            const error = data.errors[0];
+            const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
+            const nextPixelDate = new Date(nextPixel);
+            const delay = nextPixelDate.getTime() - Date.now();
+            console.log(`Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
+            setTimeout(attemptPlace, delay);
+        } else {
+            const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
+            const nextPixelDate = new Date(nextPixel);
+            const delay = nextPixelDate.getTime() - Date.now();
+            console.log(`Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
+            setTimeout(attemptPlace, delay);
+        }
+    } catch (e) {
+        console.warn('Fout bij response analyseren', e);
+        setTimeout(attemptPlace, 10000);
+    }
 }
 
 function place(x, y, color) {
@@ -274,3 +285,6 @@ function getMapFromUrl(url) {
 function rgbToHex(r, g, b) {
 	return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
 }
+
+let rgbaOrderToHex = (i, rgbaOrder) =>
+    rgbToHex(rgbaOrder[i * 4], rgbaOrder[i * 4 + 1], rgbaOrder[i * 4 + 2]);
