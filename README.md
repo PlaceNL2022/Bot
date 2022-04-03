@@ -20,23 +20,16 @@ before you start, make sure your cooldown has run out!
 
 ## Headless bot
 
-### You can get an access token
-1. Go to [r/place](https://www.reddit.com/r/place/)
-2. Open the browser console (F12 -> Click on console)
-3. paste this code and press enter:
-```
-async function getAccessToken() {
-	const usingOldReddit = window.location.href.includes('new.reddit.com');
-	const url = usingOldReddit ? 'https://new.reddit.com/r/place/' : 'https://www.reddit.com/r/place/';
-	const response = await fetch(url);
-	const responseText = await response.text();
+### How to get reddit_session cookie
+**NOTE: People have reported that this is annoying to do on chrome because teksts get unselected. Therefore we recommend that you use firefox.**
 
-	return responseText.split('\"accessToken\":\"')[1].split('"')[0];
-}
-
-await getAccessToken()
-```
-4. The text between quotes (`"`) is your access token.
+1. Go to [r/place](https://reddit.com/r/place)
+2. Open dev tools and go to the network tab
+3. Refresh the page
+4. Click on the first request to reddit.com/r/place (See image)
+![Screenshot_20220403_165251](https://user-images.githubusercontent.com/9784257/161433856-27ef7e7c-7f00-4b37-b274-4199ea919aa9.png)
+5. Go to the tab called `Cookies`
+6. Copy the value of the `reddit_session` cookie
 
 ### Installation instructions
 
@@ -50,7 +43,7 @@ await getAccessToken()
     
     Linux: Is this necessary?
 5. install the dependencies: `npm i`
-6. execute the bot `node bot.js ACCESS_TOKEN_HERE`
+6. execute the bot `node bot.js SESSION_COOKIE_HERE`
 7. BONUS: You can repeat these steps for any amount of accounts you'd want. Keep in mind to use different accounts.
 
 # Docker alternative
@@ -60,7 +53,7 @@ This option is mostly useful for people who are already using docker.
 It has been confirmed to run on x64(average desktop computer) and armv7(raspberry pi), but it should also be able to run on arm64(new apple computers).
 
 1. Install [Docker](https://docs.docker.com/get-docker/)
-2. Run this command: `docker run --pull=always --restart unless-stopped -it ghcr.io/placenl/placenl-bot ACCESS_TOKEN_HERE`
+2. Run this command: `docker run --pull=always --restart unless-stopped -it ghcr.io/placenl/placenl-bot SESSION_COOKIE_HERE`
 
 -----
 
@@ -84,23 +77,18 @@ Voordat je begint, zorg dat je pixel wachttijd is verlopen!
 
 ## Headless bot
 
-### Je access token verkrijgen
-1. Ga naar [r/place](https://www.reddit.com/r/place/)
-2. Open de browser console (F12/Element inspecteren -> Click op console)
-3. Plak de volgende code en druk op enter:
-```
-async function getAccessToken() {
-	const usingOldReddit = window.location.href.includes('new.reddit.com');
-	const url = usingOldReddit ? 'https://new.reddit.com/r/place/' : 'https://www.reddit.com/r/place/';
-	const response = await fetch(url);
-	const responseText = await response.text();
+### Je sessie cookie verkrijgen
+**NOTE: People have reported that this is annoying to do on chrome because teksts get unselected. Therefore we recommend that you use firefox.**
 
-	return responseText.split('\"accessToken\":\"')[1].split('"')[0];
-}
+**NOTE: Mensen hebben ons verteld dat dit process vervelend is op chrome, hierom raden wij firefox aan.**
 
-await getAccessToken()
-```
-4. De tekst tussen de quotes (`"`) is je access token.
+1. Ga naar [r/place](https://reddit.com/r/place)
+2. Open Element inspecteren/F12 en ga naar het tabje netwerk
+3. Herlaad de pagina
+4. Click op de eerste request naar reddit.com/r/place (Zie afbeelding)
+![Screenshot_20220403_165251](https://user-images.githubusercontent.com/9784257/161433856-27ef7e7c-7f00-4b37-b274-4199ea919aa9.png)
+5. Ga naar het tabje cookies
+6. Kopieer de waarde van `reddit_session`
 
 ### Installatieinstructies
 
@@ -112,7 +100,7 @@ await getAccessToken()
     Mac: Echt geen idee. Sorry!
     Linux: Niet echt nodig toch?
 5. Installeer de nodige depdendencies met `npm i`
-6. Voor de bot uit met `node bot.js ACCESS_TOKEN_HIER`
+6. Voor de bot uit met `node bot.js SESSIE_COOKIE_HIER`
 7. BONUS: Je kunt de laatse twee stappen zo vaak doen als je wil voor extra accounts. Let wel op dat je andere accounts gebruikt anders heeft het niet heel veel zin.
 
 # Docker alternatief
@@ -122,4 +110,4 @@ Dit alternatief is vooral geschikt voor iedereen die al docker gebruikt.
 Het is bevestigd dat het op x64(gemiddelde desktopcomputer) en armv7(raspberry pi) draait, maar het zou ook op arm64(nieuwe Apple-computers) moeten kunnen draaien.
 
 1. Installeer [Docker](https://docs.docker.com/get-docker/)
-2. Start dit command: `docker run --pull=always --restart unless-stopped -it ghcr.io/placenl/placenl-bot ACCESS_TOKEN_HIER`
+2. Start dit command: `docker run --pull=always --restart unless-stopped -it ghcr.io/placenl/placenl-bot SESSIE_COOKIE_HIER`
