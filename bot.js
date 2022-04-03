@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import getPixels from "get-pixels";
 import WebSocket from 'ws';
 
-const VERSION_NUMBER = 2;
+const VERSION_NUMBER = 3;
 
 console.log(`PlaceNL headless client V${VERSION_NUMBER}`);
 
@@ -226,7 +226,6 @@ async function attemptPlace(accessToken) {
     const data = await res.json();
     try {
         if (data.errors) {
-            console.log(data.errors)
             const error = data.errors[0];
             const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
             const nextPixelDate = new Date(nextPixel);
@@ -248,7 +247,6 @@ async function attemptPlace(accessToken) {
 
 function place(x, y, color, accessToken = defaultAccessToken) {
     socket.send(JSON.stringify({ type: 'placepixel', x, y, color }));
-    console.log("Placing pixel at (" + x + ", " + y + ") with color: " + color)
 	return fetch('https://gql-realtime-2.reddit.com/query', {
 		method: 'POST',
 		body: JSON.stringify({
@@ -343,7 +341,6 @@ function getMapFromUrl(url) {
                 reject()
                 return
             }
-            console.log("got pixels", pixels.shape.slice())
             resolve(pixels)
         })
     });
