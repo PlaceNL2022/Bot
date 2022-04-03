@@ -50,8 +50,15 @@ await getAccessToken()
     
     Linux: Is this necessary?
 5. install the dependencies: `npm i`
-6. execute the bot `node bot.js ACCESS_TOKEN_HIER`
+6. execute the bot `node bot.js ACCESS_TOKEN_HERE`
 7. BONUS: You can repeat these steps for any amount of accounts you'd want. Keep in mind to use different accounts.
+
+# Docker alternative
+
+This option is mostly useful for people who are already using docker.
+
+1. Install [Docker](https://docs.docker.com/get-docker/)
+2. Run this command: `docker run --pull=always --rm -it ghcr.io/placenl/placenl-bot ACCESS_TOKEN_HERE`
 
 -----
 
@@ -106,3 +113,9 @@ await getAccessToken()
 6. Voor de bot uit met `node bot.js ACCESS_TOKEN_HIER`
 7. BONUS: Je kunt de laatse twee stappen zo vaak doen als je wil voor extra accounts. Let wel op dat je andere accounts gebruikt anders heeft het niet heel veel zin.
 
+# Docker alternatief
+
+Dit alternatief is vooral geschikt voor iedereen die al docker gebruikt.
+
+1. Installeer [Docker](https://docs.docker.com/get-docker/)
+2. Start dit command: `docker run --pull=always --rm -it ghcr.io/placenl/placenl-bot ACCESS_TOKEN_HIER`
