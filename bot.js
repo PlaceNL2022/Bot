@@ -1,28 +1,31 @@
 import fetch from 'node-fetch';
+import getPixels from "get-pixels";
 import WebSocket from 'ws';
-import * as Canvas from 'canvas';
 
-const createCanvas = Canvas.default.createCanvas;
-const loadImage = Canvas.default.loadImage;
+const VERSION_NUMBER = 2;
+
+console.log(`PlaceTUD headless client V${VERSION_NUMBER}`);
 
 const args = process.argv.slice(2);
 
 if (args.length != 1 && !process.env.ACCESS_TOKEN) {
-    console.error('Missing access token.');
+    console.error("Missing access token.")
     process.exit(1);
 }
 
-let accessToken = process.env.ACCESS_TOKEN || args[0];
+let accessTokens = (process.env.ACCESS_TOKEN || args[0]).split(',');
+let defaultAccessToken = accessTokens[0];
+
+if (accessTokens.length > 4) {
+    console.warn("More than four reddit accounts per IP are not recommended!")
+}
 
 var socket;
-var order = undefined;
-
-var currentOrderCanvas = createCanvas(2000, 1000);
-var currentOrderCtx = currentOrderCanvas.getContext('2d');
-var currentPlaceCanvas = createCanvas(2000, 1000);
+var currentOrders;
+var currentOrderList;
 
 const COLOR_MAPPINGS = {
-    '#BE0039': 1,
+	'#BE0039': 1,
     '#FF4500': 2,
     '#FFA800': 3,
     '#FFD635': 4,
@@ -48,6 +51,17 @@ const COLOR_MAPPINGS = {
     '#FFFFFF': 31
 };
 
+let rgbaJoin = (a1, a2, rowSize = 1000, cellSize = 4) => {
+    const rawRowSize = rowSize * cellSize;
+    const rows = a1.length / rawRowSize;
+    let result = new Uint8Array(a1.length + a2.length);
+    for (var row = 0; row < rows; row++) {
+        result.set(a1.slice(rawRowSize * row, rawRowSize * (row+1)), rawRowSize * 2 * row);
+        result.set(a2.slice(rawRowSize * row, rawRowSize * (row+1)), rawRowSize * (2 * row + 1));
+    }
+    return result;
+};
+
 let getRealWork = rgbaOrder => {
     let order = [];
     for (var i = 0; i < 2000000; i++) {
@@ -69,13 +83,15 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
 };
 
 (async function () {
-    currentOrderCanvas.width = 2000;
-    currentOrderCanvas.height = 1000;
-    currentPlaceCanvas.width = 2000;
-    currentPlaceCanvas.height = 1000;
+	connectSocket();
 
-    connectSocket();
-    attemptPlace();
+    // Try to stagger pixel placement
+    const interval = 300 / accessTokens.length;
+    var delay = 0;
+    for (const accessToken of accessTokens) {
+        setTimeout(() => attemptPlace(accessToken), delay * 1000);
+        delay += interval;
+    }
 
     setInterval(() => {
         if (socket) socket.send(JSON.stringify({ type: 'ping' }));
@@ -83,13 +99,18 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
 })();
 
 function connectSocket() {
-    console.log('Connectring with PlaceTUD server...');
+    console.log('Connecting with PlaceTUD server...');
 
     socket = new WebSocket('wss://placetud.yanick.gay/api/ws');
+
+    socket.onerror = function(e) {
+        console.error("Socket error: " + e.message)
+    }
 
     socket.onopen = function () {
         console.log('Connected with PlaceTUD server!');
         socket.send(JSON.stringify({ type: 'getmap' }));
+        socket.send(JSON.stringify({ type: 'brand', brand: `nodeheadlessV${VERSION_NUMBER}` }));
     };
 
     socket.onmessage = async function (message) {
@@ -97,15 +118,15 @@ function connectSocket() {
         try {
             data = JSON.parse(message.data);
         } catch (e) {
-            console.log('Fout bij parsen JSON: ' + message.data);
+            console.log('Failed to parse JSON: ' + message.data);
             return;
         }
 
         switch (data.type.toLowerCase()) {
             case 'map':
-                console.log(`New map loaded (reason: ${data.reason ? data.reason : 'connected to server'})`);
-                currentOrderCtx = await getCanvasFromUrl(`https://placetud.yanick.gay/maps/${data.data}`, currentOrderCanvas);
-                order = getRealWork(currentOrderCtx.getImageData(0, 0, 2000, 1000).data);
+                console.log(`New map loaded (reason: ${data.reason ? data.reason : 'connected to server'})`)
+                currentOrders = await getMapFromUrl(`https://placetud.yanick.gay/maps/${data.data}`);
+                currentOrderList = getRealWork(currentOrders.data);
                 break;
             default:
                 break;
@@ -120,164 +141,167 @@ function connectSocket() {
     };
 }
 
-async function attemptPlace() {
-    if (order === undefined) {
-        setTimeout(attemptPlace, 2000); // probeer opnieuw in 2sec.
+async function attemptPlace(accessToken) {
+    let retry = () => attemptPlace(accessToken);
+    if (currentOrderList === undefined) {
+        setTimeout(retry, 2000); // probeer opnieuw in 2sec.
         return;
     }
-    var ctx;
+    
+    var map0;
+    var map1;
     try {
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0);
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0);
+        map0 = await getMapFromUrl(await getCurrentImageUrl('0'))
+        map1 = await getMapFromUrl(await getCurrentImageUrl('1'));
     } catch (e) {
-        console.warn('Error loading map: ', e);
-        console.log('Error loading map. Trying again in 10 seconds');
-        setTimeout(attemptPlace, 10000);
+        console.warn('Failed to load map: ', e);
+        setTimeout(retry, 15000); // probeer opnieuw in 15sec.
         return;
     }
 
-    const rgbaOrder = currentOrderCtx.getImageData(0, 0, 2000, 1000).data;
-    const rgbaCanvas = ctx.getImageData(0, 0, 2000, 1000).data;
-    const work = getPendingWork(order, rgbaOrder, rgbaCanvas);
+    const rgbaOrder = currentOrders.data;
+    const rgbaCanvas = rgbaJoin(map0.data, map1.data);
+    const work = getPendingWork(currentOrderList, rgbaOrder, rgbaCanvas);
 
     if (work.length === 0) {
-        console.log(`All pixels are already in the right place! Try again in 30 seconds ...`);
-        setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
+        console.log(`All pixels have been placed! Trying again in 30 sec...`);
+        setTimeout(retry, 30000); // probeer opnieuw in 30sec.
         return;
     }
 
+    const percentComplete = 100 - Math.ceil(work.length * 100 / currentOrderList.length);
+    const workRemaining = work.length;
     const idx = Math.floor(Math.random() * work.length);
     const i = work[idx];
     const x = i % 2000;
     const y = Math.floor(i / 2000);
     const hex = rgbaOrderToHex(i, rgbaOrder);
 
-    console.log(`Pixel try to place on ${x}, ${y}...`);
+    console.log(`Trying to place pixel at ${x}, ${y}... (${percentComplete}% completed, ${workRemaining} pixels remaining)`);
 
-    const res = await place(x, y, COLOR_MAPPINGS[hex]);
+    const res = await place(x, y, COLOR_MAPPINGS[hex], accessToken);
     const data = await res.json();
-
     try {
         if (data.errors) {
             const error = data.errors[0];
             const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
             const nextPixelDate = new Date(nextPixel);
             const delay = nextPixelDate.getTime() - Date.now();
-            console.log(`Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`);
-            setTimeout(attemptPlace, delay);
+            console.log(`Pixel placed too quickly! Next pixel will be placed at ${nextPixelDate.toLocaleTimeString()}.`)
+            setTimeout(retry, delay);
         } else {
             const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
             const nextPixelDate = new Date(nextPixel);
             const delay = nextPixelDate.getTime() - Date.now();
-            console.log(`Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`);
-            setTimeout(attemptPlace, delay);
+            console.log(`Pixel placed at ${x}, ${y}! Next pixel will be placed at ${nextPixelDate.toLocaleTimeString()}.`)
+            setTimeout(retry, delay);
         }
     } catch (e) {
-        console.warn('Fout bij response analyseren', e);
-        setTimeout(attemptPlace, 10000);
+        console.warn('Failed to read response', e);
+        setTimeout(retry, 10000);
     }
 }
 
-function place(x, y, color) {
+function place(x, y, color, accessToken = defaultAccessToken) {
     socket.send(JSON.stringify({ type: 'placepixel', x, y, color }));
-    return fetch('https://gql-realtime-2.reddit.com/query', {
-        method: 'POST',
-        body: JSON.stringify({
-            'operationName': 'setPixel',
-            'variables': {
-                'input': {
-                    'actionName': 'r/replace:set_pixel',
-                    'PixelMessageData': {
-                        'coordinate': {
-                            'x': x % 1000,
-                            'y': y % 1000
-                        },
-                        'colorIndex': color,
-                        'canvasIndex': (x > 999 ? 1 : 0)
-                    }
-                }
-            },
-            'query': 'mutation setPixel($input: ActInput!) {\n  act(input: $input) {\n    data {\n      ... on BasicMessage {\n        id\n        data {\n          ... on GetUserCooldownResponseMessageData {\n            nextAvailablePixelTimestamp\n            __typename\n          }\n          ... on SetPixelResponseMessageData {\n            timestamp\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n'
-        }),
-        headers: {
-            'origin': 'https://hot-potato.reddit.com',
-            'referer': 'https://hot-potato.reddit.com/',
-            'apollographql-client-name': 'mona-lisa',
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-        }
-    });
+    console.log("Placing pixel at (" + x + ", " + y + ") with color: " + color)
+	return fetch('https://gql-realtime-2.reddit.com/query', {
+		method: 'POST',
+		body: JSON.stringify({
+			'operationName': 'setPixel',
+			'variables': {
+				'input': {
+					'actionName': 'r/replace:set_pixel',
+					'PixelMessageData': {
+						'coordinate': {
+							'x': x % 1000,
+							'y': y % 1000
+						},
+						'colorIndex': color,
+						'canvasIndex': (x > 999 ? 1 : 0)
+					}
+				}
+			},
+			'query': 'mutation setPixel($input: ActInput!) {\n  act(input: $input) {\n    data {\n      ... on BasicMessage {\n        id\n        data {\n          ... on GetUserCooldownResponseMessageData {\n            nextAvailablePixelTimestamp\n            __typename\n          }\n          ... on SetPixelResponseMessageData {\n            timestamp\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n'
+		}),
+		headers: {
+			'origin': 'https://hot-potato.reddit.com',
+			'referer': 'https://hot-potato.reddit.com/',
+			'apollographql-client-name': 'mona-lisa',
+			'Authorization': `Bearer ${accessToken}`,
+			'Content-Type': 'application/json'
+		}
+	});
 }
 
 async function getCurrentImageUrl(id = '0') {
-    return new Promise((resolve, reject) => {
-        const ws = new WebSocket('wss://gql-realtime-2.reddit.com/query', 'graphql-ws', {
-            headers : {
-                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0',
-                'Origin': 'https://hot-potato.reddit.com'
-            }
-        });
+	return new Promise((resolve, reject) => {
+		const ws = new WebSocket('wss://gql-realtime-2.reddit.com/query', 'graphql-ws', {
+        headers : {
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0",
+            "Origin": "https://hot-potato.reddit.com"
+        }
+      });
 
-        ws.onopen = () => {
-            ws.send(JSON.stringify({
-                'type': 'connection_init',
-                'payload': {
-                    'Authorization': `Bearer ${accessToken}`
-                }
-            }));
-            ws.send(JSON.stringify({
-                'id': '1',
-                'type': 'start',
-                'payload': {
-                    'variables': {
-                        'input': {
-                            'channel': {
-                                'teamOwner': 'AFD2022',
-                                'category': 'CANVAS',
-                                'tag': id
-                            }
-                        }
-                    },
-                    'extensions': {},
-                    'operationName': 'replace',
-                    'query': 'subscription replace($input: SubscribeInput!) {\n  subscribe(input: $input) {\n    id\n    ... on BasicMessage {\n      data {\n        __typename\n        ... on FullFrameMessageData {\n          __typename\n          name\n          timestamp\n        }\n      }\n      __typename\n    }\n    __typename\n  }\n}'
-                }
-            }));
-        };
+		ws.onopen = () => {
+			ws.send(JSON.stringify({
+				'type': 'connection_init',
+				'payload': {
+					'Authorization': `Bearer ${defaultAccessToken}`
+				}
+			}));
 
-        ws.onmessage = (message) => {
-            const { data } = message;
-            const parsed = JSON.parse(data);
+			ws.send(JSON.stringify({
+				'id': '1',
+				'type': 'start',
+				'payload': {
+					'variables': {
+						'input': {
+							'channel': {
+								'teamOwner': 'AFD2022',
+								'category': 'CANVAS',
+								'tag': id
+							}
+						}
+					},
+					'extensions': {},
+					'operationName': 'replace',
+					'query': 'subscription replace($input: SubscribeInput!) {\n  subscribe(input: $input) {\n    id\n    ... on BasicMessage {\n      data {\n        __typename\n        ... on FullFrameMessageData {\n          __typename\n          name\n          timestamp\n        }\n      }\n      __typename\n    }\n    __typename\n  }\n}'
+				}
+			}));
+		};
 
-            if (['connection_ack', 'ka'].includes(parsed.type)) {
-                return;
-            }
+		ws.onmessage = (message) => {
+			const { data } = message;
+			const parsed = JSON.parse(data);
 
             if (parsed.type === 'connection_error') {
-                throw new Error(parsed.payload.message);
+                console.error(`[!!] Kon /r/place map niet laden: ${parsed.payload.message}. Is de access token niet meer geldig?`);
             }
 
-            ws.close();
-            resolve(parsed.payload.data.subscribe.data.name + `?noCache=${Date.now() * Math.random()}`);
-        }
+			// TODO: ew
+			if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
 
-        ws.onerror = reject;
-    });
+			ws.close();
+			resolve(parsed.payload.data.subscribe.data.name + `?noCache=${Date.now() * Math.random()}`);
+		}
+
+
+		ws.onerror = reject;
+	});
 }
 
-function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
+function getMapFromUrl(url) {
     return new Promise((resolve, reject) => {
-        const ctx = canvas.getContext('2d');
-        const load = () => {
-            loadImage(url).then(img => {
-                ctx.drawImage(img, x, y);
-                resolve(ctx);
-            }).catch(() => {
-                console.log('Fout bij ophalen map. Opnieuw proberen in 3 sec...');
-                setTimeout(() => load(), 3000);
-            })
-        };
-        load();
+        getPixels(url, function(err, pixels) {
+            if(err) {
+                console.log("Bad image path")
+                reject()
+                return
+            }
+            console.log("got pixels", pixels.shape.slice())
+            resolve(pixels)
+        })
     });
 }
 
