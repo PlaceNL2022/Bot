@@ -8,15 +8,23 @@ console.log(`PlaceNL headless client V${VERSION_NUMBER}`);
 
 const args = process.argv.slice(2);
 
-if (args.length != 1 && !process.env.ACCESS_TOKEN) {
-    console.error("Missing access token.")
+//if (args.length != 1 && !process.env.ACCESS_TOKEN) {
+//    console.error("Missing access token.")
+//    process.exit(1);
+//}
+if (args.length != 1 && !process.env.REDDIT_SESSION) {
+    console.error("Missing reddit_session cookie.")
     process.exit(1);
 }
 
-let accessTokens = (process.env.ACCESS_TOKEN || args[0]).split(',');
-let defaultAccessToken = accessTokens[0];
+let redditSessionCookies = (process.env.REDDIT_SESSION || args[0]).split(';');
 
-if (accessTokens.length > 4) {
+var hasTokens = false;
+
+let accessTokens;
+let defaultAccessToken;
+
+if (redditSessionCookies.length > 4) {
     console.warn("Meer dan 4 reddit accounts per IP addres wordt niet geadviseerd!")
 }
 
@@ -83,7 +91,22 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
 };
 
 (async function () {
-	connectSocket();
+    refreshTokens();
+    connectSocket();
+
+    startPlacement();
+
+    setInterval(() => {
+        if (socket) socket.send(JSON.stringify({ type: 'ping' }));
+    }, 5000);
+})();
+
+function startPlacement() {
+    if (!hasTokens) {
+        // Probeer over een seconde opnieuw.
+        setTimeout(startPlacement, 1000);
+        return
+    }
 
     // Try to stagger pixel placement
     const interval = 300 / accessTokens.length;
@@ -92,11 +115,32 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
         setTimeout(() => attemptPlace(accessToken), delay * 1000);
         delay += interval;
     }
+}
 
-    setInterval(() => {
-        if (socket) socket.send(JSON.stringify({ type: 'ping' }));
-    }, 5000);
-})();
+async function refreshTokens() {
+    let tokens = [];
+    for (const cookie of redditSessionCookies) {
+        const response = await fetch("https://www.reddit.com/r/place/", {
+            headers: {
+                cookie: `reddit_session=${cookie}`
+            }
+        });
+        const responseText = await response.text()
+
+        let token = responseText.split('\"accessToken\":\"')[1].split('"')[0];
+        tokens.push(token);
+    }
+
+    console.log("Refreshed tokens: ", tokens)
+
+    accessTokens = tokens;
+    defaultAccessToken = tokens[0]
+
+    // Refresh de tokens elke 30 minuten. Moet genoeg zijn toch.
+    setInterval(refreshTokens, 30 * 60 * 1000);
+
+    hasTokens = true;
+}
 
 function connectSocket() {
     console.log('Verbinden met PlaceNL server...')
@@ -182,6 +226,7 @@ async function attemptPlace(accessToken) {
     const data = await res.json();
     try {
         if (data.errors) {
+            console.log(data.errors)
             const error = data.errors[0];
             const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
             const nextPixelDate = new Date(nextPixel);
