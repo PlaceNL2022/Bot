@@ -227,11 +227,16 @@ async function attemptPlace(accessToken) {
     try {
         if (data.errors) {
             const error = data.errors[0];
-            const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
-            const nextPixelDate = new Date(nextPixel);
-            const delay = nextPixelDate.getTime() - Date.now();
-            console.log(`Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
-            setTimeout(retry, delay);
+            if (error.extensions && error.extensions.nextAvailablePixelTimestamp) {
+                const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
+                const nextPixelDate = new Date(nextPixel);
+                const delay = nextPixelDate.getTime() - Date.now();
+                console.log(`Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
+                setTimeout(retry, delay);
+            } else {
+                console.error(`[!!] Kritieke fout: ${error.message}. Heb je de 'reddit_session' cookie goed gekopieerd?`);
+                console.error(`[!!] Los dit op en herstart het script`);
+            }
         } else {
             const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
             const nextPixelDate = new Date(nextPixel);
