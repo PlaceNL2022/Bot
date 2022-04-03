@@ -169,7 +169,7 @@ async function attemptPlace(accessToken) {
     }
 
     const percentComplete = 100 - Math.ceil(work.length * 100 / currentOrderList.length);
-    const workRemaining = work.length - 1;
+    const workRemaining = work.length;
     const idx = Math.floor(Math.random() * work.length);
     const i = work[idx];
     const x = i % 2000;
