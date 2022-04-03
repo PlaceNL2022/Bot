@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot
 // @namespace    https://github.com/PlaceNL/Bot
-// @version      15
+// @version      16
 // @description  De bot voor PlaceNL!
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
@@ -117,7 +117,7 @@ function connectSocket() {
             duration: 10000
         }).showToast();
         socket.send(JSON.stringify({ type: 'getmap' }));
-        socket.send(JSON.stringify({ type: 'brand', brand: 'userscriptV15' }));
+        socket.send(JSON.stringify({ type: 'brand', brand: 'userscriptV16' }));
     };
 
     socket.onmessage = async function (message) {
@@ -134,7 +134,7 @@ function connectSocket() {
                     text: `Nieuwe map laden (reden: ${data.reason ? data.reason : 'verbonden met server'})...`,
                     duration: 10000
                 }).showToast();
-                currentOrderCtx = await getCanvasFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`, currentOrderCanvas);
+                currentOrderCtx = await getCanvasFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`, currentOrderCanvas, 0, 0, true);
                 order = getRealWork(currentOrderCtx.getImageData(0, 0, 2000, 1000).data);
                 Toastify({
                     text: `Nieuwe map geladen, ${order.length} pixels in totaal`,
@@ -164,8 +164,8 @@ async function attemptPlace() {
     }
     var ctx;
     try {
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0);
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0)
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0, false);
+        ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0, false)
     } catch (e) {
         console.warn('Fout bij ophalen map: ', e);
         Toastify({
@@ -321,12 +321,15 @@ async function getCurrentImageUrl(id = '0') {
     });
 }
 
-function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
+function getCanvasFromUrl(url, canvas, x = 0, y = 0, clearCanvas = false) {
     return new Promise((resolve, reject) => {
         let loadImage = ctx => {
             var img = new Image();
             img.crossOrigin = 'anonymous';
             img.onload = () => {
+                if (clearCanvas) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
                 ctx.drawImage(img, x, y);
                 resolve(ctx);
             };
