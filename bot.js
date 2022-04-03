@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import getPixels from "get-pixels";
 import WebSocket from 'ws';
 
-const VERSION_NUMBER = 3;
+const VERSION_NUMBER = 4;
 
 console.log(`PlaceNL headless client V${VERSION_NUMBER}`);
 
