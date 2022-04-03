@@ -259,7 +259,7 @@ async function attemptPlace(accessToken) {
     try {
         if (data.errors) {
             const error = data.errors[0];
-            if (error.extensions && error.extensions.nextAvailablePixelTimestamp) {
+            if (error.extensions && error.extensions.nextAvailablePixelTs) {
                 const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
                 const nextPixelDate = new Date(nextPixel);
                 const delay = nextPixelDate.getTime() - Date.now();
