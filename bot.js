@@ -248,8 +248,9 @@ async function getCurrentImageUrl(id = '0') {
         ws.onmessage = (message) => {
             const { data } = message;
             const parsed = JSON.parse(data);
-            if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) {
-                throw new Error('You token is dead!');
+
+            if (['connection_ack', 'ka'].includes(parsed.type)) {
+                return;
             }
 
             ws.close();
