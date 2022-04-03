@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import getPixels from "get-pixels";
 import WebSocket from 'ws';
 
-const VERSION_NUMBER = 5;
+const VERSION_NUMBER = 6;
 
 console.log(`PlaceNL headless client V${VERSION_NUMBER}`);
 
@@ -21,7 +21,7 @@ let redditSessionCookies = (process.env.REDDIT_SESSION || args[0]).split(';');
 
 var hasTokens = false;
 
-let accessTokens;
+let accessTokenHolders = [];
 let defaultAccessToken;
 
 if (redditSessionCookies.length > 4) {
@@ -139,15 +139,21 @@ function startPlacement() {
     }
 
     // Try to stagger pixel placement
-    const interval = 300 / accessTokens.length;
+    const interval = 300 / accessTokenHolders.length;
     var delay = 0;
-    for (const accessToken of accessTokens) {
-        setTimeout(() => attemptPlace(accessToken), delay * 1000);
+    for (const accessTokenHolder of accessTokenHolders) {
+        setTimeout(() => attemptPlace(accessTokenHolder), delay * 1000);
         delay += interval;
     }
 }
 
 async function refreshTokens() {
+    if (accessTokenHolders.length === 0) {
+        for (const _ of redditSessionCookies) {
+            accessTokenHolders.push({});
+        }
+    }
+
     let tokens = [];
     for (const cookie of redditSessionCookies) {
         const response = await fetch("https://www.reddit.com/r/place/", {
@@ -162,8 +168,9 @@ async function refreshTokens() {
     }
 
     console.log("Refreshed tokens: ", tokens)
-
-    accessTokens = tokens;
+    tokens.forEach((token, idx) => {
+        accessTokenHolders[idx].token = token;
+    });
     defaultAccessToken = tokens[0];
     hasTokens = true;
 }
@@ -210,8 +217,8 @@ function connectSocket() {
     };
 }
 
-async function attemptPlace(accessToken) {
-    let retry = () => attemptPlace(accessToken);
+async function attemptPlace(accessTokenHolder) {
+    let retry = () => attemptPlace(accessTokenHolder);
     if (currentOrderList === undefined) {
         setTimeout(retry, 2000); // probeer opnieuw in 2sec.
         return;
@@ -254,19 +261,21 @@ async function attemptPlace(accessToken) {
 
     console.log(`Proberen pixel te plaatsen op ${x}, ${y}... (${percentComplete}% compleet, nog ${workRemaining} over)`);
 
-    const res = await place(x, y, COLOR_MAPPINGS[hex], accessToken);
+    const res = await place(x, y, COLOR_MAPPINGS[hex], accessTokenHolder.token);
     const data = await res.json();
     try {
-        if (data.errors) {
-            const error = data.errors[0];
-            if (error.extensions && error.extensions.nextAvailablePixelTimestamp) {
+        if (data.error || data.errors) {
+            const error = data.error || data.errors[0];
+            if (error.extensions && error.extensions.nextAvailablePixelTs) {
                 const nextPixel = error.extensions.nextAvailablePixelTs + 3000;
                 const nextPixelDate = new Date(nextPixel);
                 const delay = nextPixelDate.getTime() - Date.now();
                 console.log(`Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
                 setTimeout(retry, delay);
             } else {
-                console.error(`[!!] Kritieke fout: ${error.message}. Heb je de 'reddit_session' cookie goed gekopieerd?`);
+                const message = error.message || error.reason || 'Unknown error';
+                const guidance = message === 'user is not logged in' ? 'Heb je de "reddit_session" cookie goed gekopieerd?' : '';
+                console.error(`[!!] Kritieke fout: ${message}. ${guidance}`);
                 console.error(`[!!] Los dit op en herstart het script`);
             }
         } else {
