@@ -20,7 +20,7 @@ let hasOrders = false;
 let currentOrders;
 
 const order = [];
-for (let i = 0; i < 200000; i++) {
+for (let i = 0; i < 2000000; i++) {
     order.push(i);
 }
 order.sort(() => Math.random() - 0.5);
@@ -178,7 +178,7 @@ async function attemptPlace() {
     }
 
     const rgbaOrder = currentOrders.data;
-    const rgbaCanvas = [].concat(map0.data, map1.data);
+    const rgbaCanvas = Uint8Array.from([...map0.data,...map1.data]);
 
     for (const i of order) {
         if (rgbaOrder[(i * 4) + 3] === 0) continue;
