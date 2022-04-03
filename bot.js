@@ -253,6 +253,10 @@ async function getCurrentImageUrl(id = '0') {
                 return;
             }
 
+            if (parsed.type === 'connection_error') {
+                throw new Error(parsed.payload.message);
+            }
+
             ws.close();
             resolve(parsed.payload.data.subscribe.data.name + `?noCache=${Date.now() * Math.random()}`);
         }
