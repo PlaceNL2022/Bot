@@ -10,7 +10,12 @@ if (args.length != 1 && !process.env.ACCESS_TOKEN) {
     process.exit(1);
 }
 
-let accessToken = process.env.ACCESS_TOKEN || args[0];
+let accessTokens = (process.env.ACCESS_TOKEN || args[0]).split(',');
+let defaultAccessToken = accessTokens[0];
+
+if (accessTokens.length > 4) {
+    console.warn("Meer dan 4 reddit accounts per IP addres wordt niet geadviseerd!")
+}
 
 var socket;
 var currentOrders;
@@ -76,7 +81,14 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
 
 (async function () {
 	connectSocket();
-    attemptPlace();
+
+    // Try to stagger pixel placement
+    const interval = 300 / accessTokens.length;
+    var delay = 0;
+    for (const accessToken of accessTokens) {
+        setTimeout(() => attemptPlace(accessToken), delay * 1000);
+        delay += interval;
+    }
 
     setInterval(() => {
         if (socket) socket.send(JSON.stringify({ type: 'ping' }));
@@ -124,9 +136,10 @@ function connectSocket() {
     };
 }
 
-async function attemptPlace() {
+async function attemptPlace(accessToken) {
+    let retry = () => attemptPlace(accessToken);
     if (currentOrderList === undefined) {
-        setTimeout(attemptPlace, 2000); // probeer opnieuw in 2sec.
+        setTimeout(retry, 2000); // probeer opnieuw in 2sec.
         return;
     }
     
@@ -137,7 +150,7 @@ async function attemptPlace() {
         map1 = await getMapFromUrl(await getCurrentImageUrl('1'));
     } catch (e) {
         console.warn('Fout bij ophalen map: ', e);
-        setTimeout(attemptPlace, 15000); // probeer opnieuw in 15sec.
+        setTimeout(retry, 15000); // probeer opnieuw in 15sec.
         return;
     }
 
@@ -147,7 +160,7 @@ async function attemptPlace() {
 
     if (work.length === 0) {
         console.log(`Alle pixels staan al op de goede plaats! Opnieuw proberen in 30 sec...`);
-        setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
+        setTimeout(retry, 30000); // probeer opnieuw in 30sec.
         return;
     }
 
@@ -160,7 +173,7 @@ async function attemptPlace() {
 
     console.log(`Proberen pixel te plaatsen op ${x}, ${y}... (${percentComplete}% compleet)`);
 
-    const res = await place(x, y, COLOR_MAPPINGS[hex]);
+    const res = await place(x, y, COLOR_MAPPINGS[hex], accessToken);
     const data = await res.json();
     try {
         if (data.errors) {
@@ -169,21 +182,21 @@ async function attemptPlace() {
             const nextPixelDate = new Date(nextPixel);
             const delay = nextPixelDate.getTime() - Date.now();
             console.log(`Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
-            setTimeout(attemptPlace, delay);
+            setTimeout(retry, delay);
         } else {
             const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
             const nextPixelDate = new Date(nextPixel);
             const delay = nextPixelDate.getTime() - Date.now();
             console.log(`Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
-            setTimeout(attemptPlace, delay);
+            setTimeout(retry, delay);
         }
     } catch (e) {
         console.warn('Fout bij response analyseren', e);
-        setTimeout(attemptPlace, 10000);
+        setTimeout(retry, 10000);
     }
 }
 
-function place(x, y, color) {
+function place(x, y, color, accessToken = defaultAccessToken) {
     socket.send(JSON.stringify({ type: 'placepixel', x, y, color }));
     console.log("Placing pixel at (" + x + ", " + y + ") with color: " + color)
 	return fetch('https://gql-realtime-2.reddit.com/query', {
@@ -228,7 +241,7 @@ async function getCurrentImageUrl(id = '0') {
 			ws.send(JSON.stringify({
 				'type': 'connection_init',
 				'payload': {
-					'Authorization': `Bearer ${accessToken}`
+					'Authorization': `Bearer ${defaultAccessToken}`
 				}
 			}));
 
