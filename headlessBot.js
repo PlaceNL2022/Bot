@@ -25,7 +25,6 @@ for (let i = 0; i < 2000000; i++) {
 }
 order.sort(() => Math.random() - 0.5);
 
-
 const COLOR_MAPPINGS = {
     '#BE0039': 1,
     '#FF4500': 2,
@@ -65,7 +64,7 @@ const COLOR_MAPPINGS = {
 })();
 
 function checkVersion() {
-    return new Promise(resolve => { 
+    return new Promise(resolve => {
         fetch(
             "https://raw.githubusercontent.com/PlaceCZ/Bot/master/headlessBot.js"
         )
@@ -147,7 +146,7 @@ function connectSocket() {
                 console.log(`Nové příkazy načteny (důvod: ${data.reason ? data.reason : 'Připojeno k serveru'})`)
                 currentOrders = await getMapFromUrl(`https://`+panel+`/maps/${data.data}`);
                 order = [];
-                for (let i = 0; i < 2000000; i++) {
+                for (let i = 0; i < 1000 * 2000; i++) {
                     if (currentOrders.data[(i * 4) + 3] !== 0) order.push(i);
                 }
                 order.sort(() => Math.random() - 0.5);
@@ -184,7 +183,7 @@ async function attemptPlace() {
     }
 
     const rgbaOrder = currentOrders.data;
-    const map = new Uint8Array(8000000);
+    const map = new Uint8Array(2000 * 1000 * 4);
     for (let y = 0; y < 1000; y++){
         for (let i = 0; i < (1000*4); i++) {
             map[(8000*y)+i] = map0.data[(8000*y)+i];
@@ -202,9 +201,10 @@ async function attemptPlace() {
         if (hex === hexC) {
           continue;
         }
+
         const x = i % 2000;
         const y = Math.floor(i / 2000);
-        console.log(`Pokus o položení pixelu na ${x}, ${y} `+"je: "+hexC+" má být: "+hex);
+        console.log(`Pokus o položení pixelu na ${x}, ${y} je: ${hexC} má být: ${hex}`);
 
         const res = await place(x, y, COLOR_MAPPINGS[hex]);
         const data = await res.json();
@@ -235,7 +235,7 @@ async function attemptPlace() {
     setTimeout(attemptPlace, 30000);
 }
 
-function place(x, y, color, canvasIndex = 0) {
+function place(x, y, color) {
   socket.send(JSON.stringify({ type: 'placepixel', x, y, color }));
   console.log("Placing pixel at (" + x + ", " + y + ") with color: " + color)
 	return fetch('https://gql-realtime-2.reddit.com/query', {
@@ -251,7 +251,7 @@ function place(x, y, color, canvasIndex = 0) {
 							'y': y % 1000
 						},
 						'colorIndex': color,
-						'canvasIndex': (x > 999 ? 1 : 0)
+						'canvasIndex': calculateCanvasIndex(x, y)
 					}
 				}
 			},
@@ -332,6 +332,21 @@ function getMapFromUrl(url) {
             resolve(pixels)
         })
     });
+}
+
+function calculateCanvasIndex(x, y) {
+    let index = 0;
+    if (x > 999) {
+        index++;
+    }
+    if (y > 999) {
+        index++;
+    }
+    if (x > 999 && y > 999) {
+        index++;
+    }
+
+    return index;
 }
 
 function rgbToHex(r, g, b) {
