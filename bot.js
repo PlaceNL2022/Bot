@@ -25,7 +25,7 @@ if (passWords) passWords = passWords.split(';');
 
 if (userNames || passWords) {
     if (userNames?.length !== passWords?.length) {
-        console.error('Een user per password graar (en ook andersom).');
+        console.error('Een user per password graag (en ook andersom).');
         userNames = false;
         passWords = false;
     }
