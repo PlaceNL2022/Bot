@@ -50,6 +50,17 @@ const COLOR_MAPPINGS = {
     '#FFFFFF': 31
 };
 
+let rgbaJoin = (a1, a2, rowSize = 1000, cellSize = 4) => {
+    const rawRowSize = rowSize * cellSize;
+    const rows = a1.length / rawRowSize;
+    let result = new Uint8Array(a1.length + a2.length);
+    for (var row = 0; row < rows; row++) {
+        result.set(a1.slice(rawRowSize * row, rawRowSize * (row+1)), rawRowSize * 2 * row);
+        result.set(a2.slice(rawRowSize * row, rawRowSize * (row+1)), rawRowSize * (2 * row + 1));
+    }
+    return result;
+};
+
 (async function () {
 	connectSocket();
     attemptPlace();
@@ -118,7 +129,7 @@ async function attemptPlace() {
     }
 
     const rgbaOrder = currentOrders.data;
-    const rgbaCanvas = [].concat(map0.data, map1.data);
+    const rgbaCanvas = rgbaJoin(map0.data, map1.data);
 
     for (const i of order) {
         // negeer lege order pixels.
