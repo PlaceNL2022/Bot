@@ -169,13 +169,14 @@ async function attemptPlace(accessToken) {
     }
 
     const percentComplete = 100 - Math.ceil(work.length * 100 / currentOrderList.length);
+    const workRemaining = work.length - 1;
     const idx = Math.floor(Math.random() * work.length);
     const i = work[idx];
     const x = i % 2000;
     const y = Math.floor(i / 2000);
     const hex = rgbaOrderToHex(i, rgbaOrder);
 
-    console.log(`Proberen pixel te plaatsen op ${x}, ${y}... (${percentComplete}% compleet)`);
+    console.log(`Proberen pixel te plaatsen op ${x}, ${y}... (${percentComplete}% compleet, nog ${workRemaining} over)`);
 
     const res = await place(x, y, COLOR_MAPPINGS[hex], accessToken);
     const data = await res.json();
