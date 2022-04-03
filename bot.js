@@ -174,7 +174,6 @@ async function attemptPlace() {
         }
     } catch (e) {
         console.warn('Fout bij response analyseren', e);
-        console.log(`Fout bij response analyseren: ${e}.`);
         setTimeout(attemptPlace, 10000);
     }
 }
@@ -249,7 +248,9 @@ async function getCurrentImageUrl(id = '0') {
         ws.onmessage = (message) => {
             const { data } = message;
             const parsed = JSON.parse(data);
-            if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
+            if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) {
+                throw new Error('You token is dead!');
+            }
 
             ws.close();
             resolve(parsed.payload.data.subscribe.data.name + `?noCache=${Date.now() * Math.random()}`);
