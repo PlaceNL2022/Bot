@@ -19,8 +19,8 @@ let socket;
 let hasOrders = false;
 let currentOrders;
 
-const order = [];
-for (let i = 0; i < 200000; i++) {
+let order = [];
+for (let i = 0; i < 2000000; i++) {
     order.push(i);
 }
 order.sort(() => Math.random() - 0.5);
@@ -146,6 +146,12 @@ function connectSocket() {
                 console.debug("data: %j", data)
                 console.log(`Nové příkazy načteny (důvod: ${data.reason ? data.reason : 'Připojeno k serveru'})`)
                 currentOrders = await getMapFromUrl(`https://`+panel+`/maps/${data.data}`);
+                order = [];
+                for (let i = 0; i < 2000000; i++) {
+                    if (currentOrders.data[(i * 4) + 3] !== 0) order.push(i);
+                }
+                order.sort(() => Math.random() - 0.5);
+                console.log("Nový příkaz ("+order.length+" pixelů)");
                 hasOrders = true;
                 break;
             default:
@@ -166,15 +172,11 @@ async function attemptPlace() {
         setTimeout(attemptPlace, 2000);
         return;
     }
-    let currentMap;
+    var map0;
+    var map1;
     try {
-	    var canvas1 = await getCurrentImageUrl('0');
-        var canvas2 = await getCurrentImageUrl('1');
-        var mapCanvas1 = await getMapFromUrl(canvas1);
-        var mapCanvas2 = await getMapFromUrl(canvas2);
-        currentMap = new Uint8Array(mapCanvas1.data.length + mapCanvas2.data.length);
-        currentMap.set(mapCanvas1.data);
-        currentMap.set(mapCanvas2.data,mapCanvas1.data.length);
+        map0 = await getMapFromUrl(await getCurrentImageUrl('0'));
+        map1 = await getMapFromUrl(await getCurrentImageUrl('1'));
     } catch (e) {
         console.warn('Chyba při načítání momentálního canvasu: ', e);
         setTimeout(attemptPlace, 15000);
@@ -182,18 +184,27 @@ async function attemptPlace() {
     }
 
     const rgbaOrder = currentOrders.data;
-    const rgbaCanvas = currentMap;
+    const map = new Uint8Array(8000000);
+    for (let y = 0; y < 1000; y++){
+        for (let i = 0; i < (1000*4); i++) {
+            map[(8000*y)+i] = map0.data[(8000*y)+i];
+        }
+        for (let i = 0; i < (1000*4); i++) {
+            map[(8000*y)+(4000+i)] = map1.data[(8000*y)+i];
+        }
+    }
+    const rgbaCanvas = map;
 
     for (const i of order) {
         if (rgbaOrder[(i * 4) + 3] === 0) continue;
-
         const hex = rgbToHex(rgbaOrder[(i * 4)], rgbaOrder[(i * 4) + 1], rgbaOrder[(i * 4) + 2]);
-        if (hex === rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])) {
+        const hexC = rgbToHex(rgbaCanvas[(i * 4)], rgbaCanvas[(i * 4) + 1], rgbaCanvas[(i * 4) + 2])
+        if (hex === hexC) {
           continue;
         }
         const x = i % 2000;
-        const y = Math.floor(i / 1000);
-        console.log(`Pokud o položení pixelu na ${x}, ${y}...`)
+        const y = Math.floor(i / 2000);
+        console.log(`Pokus o položení pixelu na ${x}, ${y} `+"je: "+hexC+" má být: "+hex);
 
         const res = await place(x, y, COLOR_MAPPINGS[hex]);
         const data = await res.json();
