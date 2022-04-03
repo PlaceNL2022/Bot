@@ -99,6 +99,8 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
     setInterval(() => {
         if (socket) socket.send(JSON.stringify({ type: 'ping' }));
     }, 5000);
+    // Refresh de tokens elke 30 minuten. Moet genoeg zijn toch.
+    setInterval(refreshTokens, 30 * 60 * 1000);
 })();
 
 function startPlacement() {
@@ -134,11 +136,7 @@ async function refreshTokens() {
     console.log("Refreshed tokens: ", tokens)
 
     accessTokens = tokens;
-    defaultAccessToken = tokens[0]
-
-    // Refresh de tokens elke 30 minuten. Moet genoeg zijn toch.
-    setInterval(refreshTokens, 30 * 60 * 1000);
-
+    defaultAccessToken = tokens[0];
     hasTokens = true;
 }
 
