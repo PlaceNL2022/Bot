@@ -248,9 +248,10 @@ async function refreshTokens() {
         for (const _ of redditSessionCookies) {
             accessTokenHolders.push({});
         }
-
-        for (const _ of userNames) {
-            accessTokenHolders.push({});
+        if (userNames) {
+            for (const _ of userNames) {
+                accessTokenHolders.push({});
+            }
         }
     }
 
