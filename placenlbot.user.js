@@ -1,11 +1,13 @@
 // ==UserScript==
 // @name         PlaceNL Bot
 // @namespace    https://github.com/PlaceNL/Bot
-// @version      21
+// @version      26
 // @description  De bot voor PlaceNL!
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
 // @match        https://new.reddit.com/r/place/*
+// @connect      reddit.com
+// @connect      placenl.noahvdaa.me
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=reddit.com
 // @require	     https://cdn.jsdelivr.net/npm/toastify-js
 // @resource     TOASTIFY_CSS https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css
@@ -13,6 +15,7 @@
 // @downloadURL  https://github.com/PlaceNL/Bot/raw/master/placenlbot.user.js
 // @grant        GM_getResourceText
 // @grant        GM_addStyle
+// @grant        GM.xmlHttpRequest
 // ==/UserScript==
 
 // Sorry voor de rommelige code, haast en clean gaat niet altijd samen ;)
@@ -133,7 +136,7 @@ function showToastToUser({text, duration, style}) {
     attemptPlace();
 
     setInterval(() => {
-        if (socket) socket.send(JSON.stringify({type: 'ping'}));
+        if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'ping' }));
     }, 5000);
     setInterval(async () => {
         accessToken = await getAccessToken();
@@ -261,7 +264,7 @@ async function attemptPlace() {
             });
             setTimeout(attemptPlace, delay);
         } else {
-            const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
+            const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000 + Math.floor(Math.random() * 10000); // Random tijd toevoegen tussen 0 en 10 sec om detectie te voorkomen en te spreiden na server herstart.
             const nextPixelDate = new Date(nextPixel);
             const delay = nextPixelDate.getTime() - Date.now();
             const toast_duration = delay > 0 ? delay : DEFAULT_TOAST_DURATION_MS;
@@ -410,8 +413,14 @@ async function getCurrentImageUrl(id = '0') {
 function getCanvasFromUrl(url, canvas, x = 0, y = 0, clearCanvas = false) {
     return new Promise((resolve, reject) => {
         let loadImage = ctx => {
-            var img = new Image();
-            img.crossOrigin = 'anonymous';
+        GM.xmlHttpRequest({
+            method: "GET",
+            url: url,
+            responseType: 'blob',
+            onload: function(response) {
+            let urlCreator = window.URL || window.webkitURL;
+            let imageUrl = urlCreator.createObjectURL(this.response);
+            let img = new Image();
             img.onload = () => {
                 if (clearCanvas) {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -426,7 +435,9 @@ function getCanvasFromUrl(url, canvas, x = 0, y = 0, clearCanvas = false) {
                 });
                 setTimeout(() => loadImage(ctx), 3000);
             };
-            img.src = url;
+            img.src = imageUrl;
+  }
+})
         };
         loadImage(canvas.getContext('2d'));
     });
