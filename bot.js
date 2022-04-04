@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import getPixels from "get-pixels";
 import WebSocket from 'ws';
 
+const PREFIX = process.env.PREFIX || "simple"
 const VERSION_NUMBER = 9;
 
 console.log(`PlaceNL headless client V${VERSION_NUMBER}`);
@@ -205,7 +206,7 @@ function connectSocket() {
     socket.onopen = function () {
         console.log('Verbonden met PlaceNL server!')
         socket.send(JSON.stringify({ type: 'getmap' }));
-        socket.send(JSON.stringify({ type: 'brand', brand: `nodeheadlessV${VERSION_NUMBER}` }));
+        socket.send(JSON.stringify({ type: 'brand', brand: `nodeheadless-${PREFIX}-V${VERSION_NUMBER}` }));
     };
 
     socket.onmessage = async function (message) {
