@@ -3,7 +3,7 @@ import getPixels from "get-pixels";
 import WebSocket from 'ws';
 
 const PREFIX = process.env.PREFIX || "simple"
-const VERSION_NUMBER = 9;
+const VERSION_NUMBER = 10;
 
 console.log(`PlaceNL headless client V${VERSION_NUMBER}`);
 
@@ -300,7 +300,7 @@ async function attemptPlace(accessTokenHolder) {
         } else {
             const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
             const nextPixelDate = new Date(nextPixel);
-            const delay = nextPixelDate.getTime() - Date.now();
+            const delay = nextPixelDate.getTime() - Date.now() + Math.floor(Math.random() * 10000); // Random tijd toevoegen tussen 0 en 10 sec om detectie te voorkomen en te spreiden na server herstart. 
             console.log(`Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
             setTimeout(retry, delay);
         }
