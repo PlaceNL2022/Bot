@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import getPixels from "get-pixels";
 import WebSocket from 'ws';
 
-const VERSION_NUMBER = 6;
+const VERSION_NUMBER = 7;
 
 console.log(`PlaceNL headless client V${VERSION_NUMBER}`);
 
@@ -134,7 +134,7 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
 function startPlacement() {
     if (!hasTokens) {
         // Probeer over een seconde opnieuw.
-        setTimeout(startPlacement, 1000);
+        setTimeout(startPlacement, 10000);
         return
     }
 
@@ -220,7 +220,7 @@ function connectSocket() {
 async function attemptPlace(accessTokenHolder) {
     let retry = () => attemptPlace(accessTokenHolder);
     if (currentOrderList === undefined) {
-        setTimeout(retry, 2000); // probeer opnieuw in 2sec.
+        setTimeout(retry, 10000); // probeer opnieuw in 10sec.
         return;
     }
     
