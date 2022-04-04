@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 import getPixels from "get-pixels";
 import WebSocket from 'ws';
+import https from 'https'
 
 const PREFIX = process.env.PREFIX || "simple"
 const VERSION_NUMBER = 11;
@@ -13,19 +14,35 @@ const args = process.argv.slice(2);
 //    console.error("Missing access token.")
 //    process.exit(1);
 //}
-if (args.length != 1 && !process.env.REDDIT_SESSION) {
-    console.error("Missing reddit_session cookie.")
+
+
+let redditSessionCookies = (process.env.REDDIT_SESSION || args[0])
+if (redditSessionCookies) redditSessionCookies = redditSessionCookies.split(';')
+
+let userNames = (process.env.USERNAME || false)
+if (userNames) userNames = userNames.split(';');
+let passWords = (process.env.PASSWORD || false)
+if (passWords) passWords = passWords.split(';');
+
+if (userNames || passWords) {
+    if (userNames?.length !== passWords?.length) {
+        console.error('Een user per password graar (en ook andersom).');
+        userNames = false;
+        passWords = false;
+    }
+}
+if (!(redditSessionCookies || (userNames && passWords))) {
+    console.error("Missing credintials cookie.")
     process.exit(1);
 }
-
-let redditSessionCookies = (process.env.REDDIT_SESSION || args[0]).split(';');
+if(!redditSessionCookies) redditSessionCookies = [];
 
 var hasTokens = false;
 
 let accessTokenHolders = [];
 let defaultAccessToken;
 
-if (redditSessionCookies.length > 4) {
+if (redditSessionCookies?.length > 4) {
     console.warn("Meer dan 4 reddit accounts per IP addres wordt niet geadviseerd!")
 }
 
@@ -138,7 +155,7 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
 };
 
 (async function () {
-    refreshTokens();
+    await refreshTokens(); // wachten totdat je de tokens hebt (duurt nu langer);
     connectSocket();
 
     startPlacement();
@@ -166,24 +183,99 @@ function startPlacement() {
     }
 }
 
+
+function request(options, body) {
+    let promise = new Promise((resolve, reject) => {
+        const req = https.request(options, (res) => {
+            resolve(res);
+        });
+
+        req.on('error', (e) => {
+            reject(error);
+        });
+        if (body) {
+            req.write(body); //stuurd de pass en username
+        }
+        req.end();
+    });
+    return promise
+}
+async function GetToken(username, password) {
+    let place_url = "https://www.reddit.com/r/place/"
+    let reddit_url = "https://www.reddit.com/login/"
+    let response = await fetch(reddit_url); //pak de csrf token van de login form (ook nodig voor sesion cookie)
+    let responseText = await response.text();
+
+    let csrf = responseText.match(/csrf_token" value\="(.*?)">/)[1]; // crsf token
+
+    let cookies = response.headers.raw()['set-cookie']; //alle cookie
+    let session = cookies[0].match(/session\=(.*?;)/)[1]; // eerste is altijd (hoop ik) de session cookie
+
+    let body = `csrf_token=${csrf}&password=${password}&username=${username}`; //body van login request
+
+    const options = {
+        hostname: 'www.reddit.com',
+        port: 443,
+        path: '/login',
+        method: 'POST',
+        headers: {
+            'cookie': `session=${session}`, //login request heeft session cookie nodig (van de eerde login form)
+        }
+    };
+
+    //node fetch werkt hier niet want die set bepalde header die niet mogen geset worden
+    let result = await request(options, body);
+    let cookie_reddit_session;
+    try {
+        cookie_reddit_session = result.headers['set-cookie'][0].match(/reddit_session\=(.*?);/)[1]; //reddit_session cookie
+    } catch (error) {
+        console.error(error);
+    }
+    
+    response = await fetch(place_url, {
+        headers: {
+            cookie: `reddit_session=${cookie_reddit_session}`
+        }
+    })
+    responseText = await response.text();
+
+    return responseText.split('\"accessToken\":\"')[1].split('"')[0];
+}
+
+
 async function refreshTokens() {
     if (accessTokenHolders.length === 0) {
         for (const _ of redditSessionCookies) {
             accessTokenHolders.push({});
         }
+        if (userNames) {
+            for (const _ of userNames) {
+                accessTokenHolders.push({});
+            }
+        }
     }
 
     let tokens = [];
-    for (const cookie of redditSessionCookies) {
-        const response = await fetch("https://www.reddit.com/r/place/", {
-            headers: {
-                cookie: `reddit_session=${cookie}`
-            }
-        });
-        const responseText = await response.text()
+    if (userNames && passWords) {
+        for (let i = 0; i < userNames.length; i++) {
+            let password = passWords[i];
+            let username = userNames[i];
+            console.log(`Reddit session token ophalen voor ${username}`);
+            let token = await GetToken(username, password);
+            tokens.push(token);
+        }
+    } else if (redditSessionCookies) {
+        for (const cookie of redditSessionCookies) {
+            const response = await fetch("https://www.reddit.com/r/place/", {
+                headers: {
+                    cookie: `reddit_session=${cookie}`
+                }
+            });
+            const responseText = await response.text()
 
-        let token = responseText.split('\"accessToken\":\"')[1].split('"')[0];
-        tokens.push(token);
+            let token = responseText.split('\"accessToken\":\"')[1].split('"')[0];
+            tokens.push(token);
+        }
     }
 
     console.log("Refreshed tokens: ", tokens)
