@@ -248,6 +248,10 @@ async function refreshTokens() {
         for (const _ of redditSessionCookies) {
             accessTokenHolders.push({});
         }
+
+        for (const _ of userNames) {
+            accessTokenHolders.push({});
+        }
     }
 
     let tokens = [];
@@ -259,24 +263,18 @@ async function refreshTokens() {
             let token = await GetToken(username, password);
             tokens.push(token);
         }
-        console.log("Refreshed tokens: ", tokens)
+    } else if (redditSessionCookies) {
+        for (const cookie of redditSessionCookies) {
+            const response = await fetch("https://www.reddit.com/r/place/", {
+                headers: {
+                    cookie: `reddit_session=${cookie}`
+                }
+            });
+            const responseText = await response.text()
 
-        accessTokens = tokens;
-        defaultAccessToken = tokens[0];
-        hasTokens = true;
-        return
-    }
-
-    for (const cookie of redditSessionCookies) {
-        const response = await fetch("https://www.reddit.com/r/place/", {
-            headers: {
-                cookie: `reddit_session=${cookie}`
-            }
-        });
-        const responseText = await response.text()
-
-        let token = responseText.split('\"accessToken\":\"')[1].split('"')[0];
-        tokens.push(token);
+            let token = responseText.split('\"accessToken\":\"')[1].split('"')[0];
+            tokens.push(token);
+        }
     }
 
     console.log("Refreshed tokens: ", tokens)
