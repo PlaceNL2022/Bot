@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot
 // @namespace    https://github.com/PlaceNL/Bot
-// @version      26
+// @version      27
 // @description  De bot voor PlaceNL!
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
@@ -18,7 +18,7 @@
 // @grant        GM.xmlHttpRequest
 // ==/UserScript==
 
-// Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
+// Sorry voor de rommelige code, haast en clean gaat niet altijd samen ;)
 
 var socket;
 var order = undefined;
@@ -29,6 +29,19 @@ var currentPlaceCanvas = document.createElement('canvas');
 
 // Global constants
 const DEFAULT_TOAST_DURATION_MS = 10000;
+
+const R_PLACE_WIDTH = 2000;
+const R_PLACE_HEIGHT = 2000;
+
+const SCRIPT_BRAND = 'userScriptV27'
+
+// Mapping for canvas ID to pixels
+const CANVAS_MAPPING = {
+    '0': [0, 0],
+    '1': [1000, 0],
+    '2': [0, 1000],
+    '3': [1000, 1000],
+}
 
 const COLOR_MAPPINGS = {
     '#6D001A': 0,
@@ -65,9 +78,10 @@ const COLOR_MAPPINGS = {
     '#FFFFFF': 31
 };
 
+
 let getRealWork = rgbaOrder => {
     let order = [];
-    for (var i = 0; i < 4000000; i++) {
+    for (let i = 0; i < R_PLACE_WIDTH * R_PLACE_HEIGHT; i++) {
         if (rgbaOrder[(i * 4) + 3] !== 0) {
             order.push(i);
         }
@@ -85,26 +99,38 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
     return pendingWork;
 };
 
+
+/**
+ * A helper function to show a toast to the user with information.
+ *
+ * @param {string} text Text to show to the user.
+ * @param {number} [duration] Duration to show the toast (negative will be infinitive).
+ * @param [style] Additional styling for the toast.
+ */
+function showToastToUser({text, duration, style}) {
+    duration = duration || DEFAULT_TOAST_DURATION_MS;
+    style = style || {}
+    Toastify({
+        text: text,
+        duration: duration,
+        style: style,
+    }).showToast();
+}
+
 (async function () {
     GM_addStyle(GM_getResourceText('TOASTIFY_CSS'));
-    currentOrderCanvas.width = 2000;
-    currentOrderCanvas.height = 2000;
+    currentOrderCanvas.width = R_PLACE_WIDTH;
+    currentOrderCanvas.height = R_PLACE_HEIGHT;
     currentOrderCanvas.style.display = 'none';
     currentOrderCanvas = document.body.appendChild(currentOrderCanvas);
-    currentPlaceCanvas.width = 2000;
-    currentPlaceCanvas.height = 2000;
+    currentPlaceCanvas.width = R_PLACE_WIDTH;
+    currentPlaceCanvas.height = R_PLACE_HEIGHT;
     currentPlaceCanvas.style.display = 'none';
     currentPlaceCanvas = document.body.appendChild(currentPlaceCanvas);
 
-    Toastify({
-        text: 'Accesstoken ophalen...',
-        duration: DEFAULT_TOAST_DURATION_MS
-    }).showToast();
+    showToastToUser({text: 'Accesstoken ophalen...'});
     accessToken = await getAccessToken();
-    Toastify({
-        text: 'Accesstoken opgehaald!',
-        duration: DEFAULT_TOAST_DURATION_MS
-    }).showToast();
+    showToastToUser({text: 'Accesstoken opgehaald!'});
 
     connectSocket();
     attemptPlace();
@@ -117,25 +143,23 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
     }, 30 * 60 * 1000)
 })();
 
+
+/**
+ * Connect to the commando server for orders.
+ */
 function connectSocket() {
-    Toastify({
-        text: 'Verbinden met PlaceNL server...',
-        duration: DEFAULT_TOAST_DURATION_MS
-    }).showToast();
+    showToastToUser({text: 'Verbinden met PlaceNL server...'});
 
     socket = new WebSocket('wss://placenl.noahvdaa.me/api/ws');
 
     socket.onopen = function () {
-        Toastify({
-            text: 'Verbonden met PlaceNL server!',
-            duration: DEFAULT_TOAST_DURATION_MS
-        }).showToast();
-        socket.send(JSON.stringify({ type: 'getmap' }));
-        socket.send(JSON.stringify({ type: 'brand', brand: 'userscriptV26' }));
+        showToastToUser({text: 'Verbonden met PlaceNL server!'});
+        socket.send(JSON.stringify({type: 'getmap'}));
+        socket.send(JSON.stringify({type: 'brand', brand: SCRIPT_BRAND}));
     };
 
     socket.onmessage = async function (message) {
-        var data;
+        let data;
         try {
             data = JSON.parse(message.data);
         } catch (e) {
@@ -143,71 +167,74 @@ function connectSocket() {
         }
 
         switch (data.type.toLowerCase()) {
-            case 'map':
-                Toastify({
-                    text: `Nieuwe map laden (reden: ${data.reason ? data.reason : 'verbonden met server'})...`,
-                    duration: DEFAULT_TOAST_DURATION_MS
-                }).showToast();
+            case 'map':  // Command that a new map is available.
+                // Show user information about loading new map
+                showToastToUser({text: `Nieuwe map laden (reden: ${data.reason ? data.reason : 'verbonden met server'})...`});
+
+                // Get the new canvas from the server
                 currentOrderCtx = await getCanvasFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`, currentOrderCanvas, 0, 0, true);
-                order = getRealWork(currentOrderCtx.getImageData(0, 0, 2000, 2000).data);
-                Toastify({
-                    text: `Nieuwe map geladen, ${order.length} pixels in totaal`,
-                    duration: DEFAULT_TOAST_DURATION_MS
-                }).showToast();
+                // Figure out the "real" work
+                order = getRealWork(currentOrderCtx.getImageData(0, 0, R_PLACE_WIDTH, R_PLACE_HEIGHT).data);
+
+                // Show the user that the map has loaded.
+                showToastToUser({text: `Nieuwe map geladen, ${order.length} pixels in totaal`});
                 break;
-            case 'toast':
-                Toastify({
+            case 'toast': // Command to show the user a toast.
+                showToastToUser({
                     text: `Bericht van server: ${data.message}`,
                     duration: data.duration || DEFAULT_TOAST_DURATION_MS,
                     style: data.style || {}
-                }).showToast();
+                });
                 break;
             default:
+                // Invalid command.
                 break;
         }
     };
 
     socket.onclose = function (e) {
-        Toastify({
-            text: `PlaceNL server heeft de verbinding verbroken: ${e.reason}`,
-            duration: DEFAULT_TOAST_DURATION_MS
-        }).showToast();
+        showToastToUser({text: `PlaceNL server heeft de verbinding verbroken: ${e.reason}`});
         console.error('Socketfout: ', e.reason);
         socket.close();
         setTimeout(connectSocket, 1000);
     };
 }
 
+/**
+ * Attempt to place a pixel.
+ */
 async function attemptPlace() {
     if (order === undefined) {
         setTimeout(attemptPlace, 2000); // probeer opnieuw in 2sec.
         return;
     }
-    var ctx;
+    let ctx;
     try {
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), currentPlaceCanvas, 0, 0, false);
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), currentPlaceCanvas, 1000, 0, false)
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('2'), currentPlaceCanvas, 0, 1000, false)
-        ctx = await getCanvasFromUrl(await getCurrentImageUrl('3'), currentPlaceCanvas, 1000, 1000, false)
+        // Loop over all the parts of the r/place canvas
+        for (const canvas_id in CANVAS_MAPPING) {
+            let canvas_coords = CANVAS_MAPPING[canvas_id];
+            let canvas_x = canvas_coords[0];
+            let canvas_y = canvas_coords[1];
+
+            // Make a request and update the currentPlaceCanvas
+            ctx = await getCanvasFromUrl(await getCurrentImageUrl(canvas_id), currentPlaceCanvas, canvas_x, canvas_y, false);
+        }
     } catch (e) {
         console.warn('Fout bij ophalen map: ', e);
-        Toastify({
-            text: 'Fout bij ophalen map. Opnieuw proberen in 10 sec...',
-            duration: DEFAULT_TOAST_DURATION_MS
-        }).showToast();
+        showToastToUser({text: 'Fout bij ophalen map. Opnieuw proberen in 10 sec...'});
         setTimeout(attemptPlace, 10000); // probeer opnieuw in 10sec.
         return;
     }
 
-    const rgbaOrder = currentOrderCtx.getImageData(0, 0, 2000, 2000).data;
-    const rgbaCanvas = ctx.getImageData(0, 0, 2000, 2000).data;
+    const rgbaOrder = currentOrderCtx.getImageData(0, 0, R_PLACE_WIDTH, R_PLACE_HEIGHT).data;
+    const rgbaCanvas = ctx.getImageData(0, 0, R_PLACE_WIDTH, R_PLACE_HEIGHT).data;
     const work = getPendingWork(order, rgbaOrder, rgbaCanvas);
 
     if (work.length === 0) {
-        Toastify({
+        showToastToUser({
             text: `Alle pixels staan al op de goede plaats! Opnieuw proberen in 30 sec...`,
             duration: 30000
-        }).showToast();
+        });
         setTimeout(attemptPlace, 30000); // probeer opnieuw in 30sec.
         return;
     }
@@ -216,14 +243,11 @@ async function attemptPlace() {
     const workRemaining = work.length;
     const idx = Math.floor(Math.random() * work.length);
     const i = work[idx];
-    const x = i % 2000;
-    const y = Math.floor(i / 2000);
+    const x = i % R_PLACE_WIDTH;
+    const y = Math.floor(i / R_PLACE_WIDTH);
     const hex = rgbaOrderToHex(i, rgbaOrder);
 
-    Toastify({
-        text: `Proberen pixel te plaatsen op ${x}, ${y}... (${percentComplete}% compleet, nog ${workRemaining} over)`,
-        duration: DEFAULT_TOAST_DURATION_MS
-    }).showToast();
+    showToastToUser({text: `Proberen pixel te plaatsen op ${x}, ${y}... (${percentComplete}% compleet, nog ${workRemaining} over)`});
 
     const res = await place(x, y, COLOR_MAPPINGS[hex]);
     const data = await res.json();
@@ -234,34 +258,39 @@ async function attemptPlace() {
             const nextPixelDate = new Date(nextPixel);
             const delay = nextPixelDate.getTime() - Date.now();
             const toast_duration = delay > 0 ? delay : DEFAULT_TOAST_DURATION_MS;
-            Toastify({
+            showToastToUser({
                 text: `Pixel te snel geplaatst! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`,
                 duration: toast_duration
-            }).showToast();
+            });
             setTimeout(attemptPlace, delay);
         } else {
             const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000 + Math.floor(Math.random() * 10000); // Random tijd toevoegen tussen 0 en 10 sec om detectie te voorkomen en te spreiden na server herstart.
             const nextPixelDate = new Date(nextPixel);
-            const delay = nextPixelDate.getTime() - Date.now(); 
+            const delay = nextPixelDate.getTime() - Date.now();
             const toast_duration = delay > 0 ? delay : DEFAULT_TOAST_DURATION_MS;
-            Toastify({
+            showToastToUser({
                 text: `Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`,
                 duration: toast_duration
-            }).showToast();
+            });
             setTimeout(attemptPlace, delay);
         }
     } catch (e) {
         console.warn('Fout bij response analyseren', e);
-        Toastify({
-            text: `Fout bij response analyseren: ${e}.`,
-            duration: DEFAULT_TOAST_DURATION_MS
-        }).showToast();
+        showToastToUser({text: `Fout bij response analyseren: ${e}.`});
         setTimeout(attemptPlace, 10000);
     }
 }
 
+
+/**
+ * Place a pixel on r/place.
+ * @param {number} x X position of the pixel.
+ * @param {number }y Y position of the pixel.
+ *
+ * @param color The color ID of the pixel.
+ */
 function place(x, y, color) {
-    socket.send(JSON.stringify({ type: 'placepixel', x, y, color }));
+    socket.send(JSON.stringify({type: 'placepixel', x, y, color}));
     return fetch('https://gql-realtime-2.reddit.com/query', {
         method: 'POST',
         body: JSON.stringify({
@@ -291,6 +320,13 @@ function place(x, y, color) {
     });
 }
 
+
+/**
+ * Get reddit canvas based x and y positions
+ * @param x
+ * @param y
+ * @returns {number}
+ */
 function getCanvas(x, y) {
     if (x <= 999) {
         return y <= 999 ? 0 : 2;
@@ -299,6 +335,10 @@ function getCanvas(x, y) {
     }
 }
 
+
+/**
+ * Get the access token for the current user window.
+ */
 async function getAccessToken() {
     const usingOldReddit = window.location.href.includes('new.reddit.com');
     const url = usingOldReddit ? 'https://new.reddit.com/r/place/' : 'https://www.reddit.com/r/place/';
@@ -309,6 +349,11 @@ async function getAccessToken() {
     return responseText.split('\"accessToken\":\"')[1].split('"')[0];
 }
 
+
+/**
+ * Get the URL for a canvas of the current r/place image
+ * @param id
+ */
 async function getCurrentImageUrl(id = '0') {
     return new Promise((resolve, reject) => {
         const ws = new WebSocket('wss://gql-realtime-2.reddit.com/query', 'graphql-ws');
@@ -341,7 +386,7 @@ async function getCurrentImageUrl(id = '0') {
         };
 
         ws.onmessage = (message) => {
-            const { data } = message;
+            const {data} = message;
             const parsed = JSON.parse(data);
 
             // TODO: ew
@@ -355,6 +400,16 @@ async function getCurrentImageUrl(id = '0') {
     });
 }
 
+
+/**
+ * Get the r/place canvas given a provided URl.
+ *
+ * @param url URL to get the canvas from
+ * @param canvas canvas to update with new information.
+ * @param x x corner to start local canvas update from.
+ * @param y y corner to start local canvas update from.
+ * @param clearCanvas if the previous canvas should be cleared.
+ */
 function getCanvasFromUrl(url, canvas, x = 0, y = 0, clearCanvas = false) {
     return new Promise((resolve, reject) => {
         let loadImage = ctx => {
@@ -363,9 +418,9 @@ function getCanvasFromUrl(url, canvas, x = 0, y = 0, clearCanvas = false) {
             url: url,
             responseType: 'blob',
             onload: function(response) {
-            var urlCreator = window.URL || window.webkitURL;
-            var imageUrl = urlCreator.createObjectURL(this.response);
-            var img = new Image();
+            let urlCreator = window.URL || window.webkitURL;
+            let imageUrl = urlCreator.createObjectURL(this.response);
+            let img = new Image();
             img.onload = () => {
                 if (clearCanvas) {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -374,10 +429,10 @@ function getCanvasFromUrl(url, canvas, x = 0, y = 0, clearCanvas = false) {
                 resolve(ctx);
             };
             img.onerror = () => {
-                Toastify({
+                showToastToUser({
                     text: 'Fout bij ophalen map. Opnieuw proberen in 3 sec...',
                     duration: 3000
-                }).showToast();
+                });
                 setTimeout(() => loadImage(ctx), 3000);
             };
             img.src = imageUrl;
@@ -388,6 +443,9 @@ function getCanvasFromUrl(url, canvas, x = 0, y = 0, clearCanvas = false) {
     });
 }
 
+/**
+ * Convert RGB values to HEX string.
+ */
 function rgbToHex(r, g, b) {
     return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
 }
