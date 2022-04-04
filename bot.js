@@ -31,6 +31,7 @@ if (redditSessionCookies.length > 4) {
 var socket;
 var currentOrders;
 var currentOrderList;
+var lastWorkData;
 
 const COLOR_MAPPINGS = {
     '#6D001A': 0,
@@ -118,6 +119,23 @@ let getPendingWork = (work, rgbaOrder, rgbaCanvas) => {
     return pendingWork;
 };
 
+let makeEtaText = workRemaining => {
+    var text = '';
+    const now = new Date();
+
+    if (lastWorkData !== undefined && lastWorkData.workRemaining - workRemaining > 40) {
+        const pixelsPerSec = (lastWorkData.workRemaining - workRemaining) * 1000 / (now - lastWorkData.timestamp);
+        const remaining = workRemaining / pixelsPerSec;
+        text = ', klaar om ' + new Date(now.getTime() + remaining * 1000).toLocaleTimeString();
+    }
+
+    lastWorkData = {
+        'workRemaining': workRemaining,
+        'timestamp': now
+    };
+    return text;
+};
+
 (async function () {
     refreshTokens();
     connectSocket();
@@ -203,6 +221,7 @@ function connectSocket() {
                 console.log(`Nieuwe map geladen (reden: ${data.reason ? data.reason : 'verbonden met server'})`)
                 currentOrders = await getMapFromUrl(`https://placenl.noahvdaa.me/maps/${data.data}`);
                 currentOrderList = getRealWork(currentOrders.data);
+                lastWorkData = undefined;
                 break;
             default:
                 break;
@@ -258,8 +277,9 @@ async function attemptPlace(accessTokenHolder) {
     const x = i % 2000;
     const y = Math.floor(i / 2000);
     const hex = rgbaOrderToHex(i, rgbaOrder);
+    const etaText = makeEtaText(workRemaining);
 
-    console.log(`Proberen pixel te plaatsen op ${x}, ${y}... (${percentComplete}% compleet, nog ${workRemaining} over)`);
+    console.log(`Proberen pixel te plaatsen op ${x}, ${y}... (${percentComplete}% compleet, nog ${workRemaining} over${etaText})`);
 
     const res = await place(x, y, COLOR_MAPPINGS[hex], accessTokenHolder.token);
     const data = await res.json();
