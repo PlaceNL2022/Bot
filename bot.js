@@ -206,7 +206,7 @@ function connectSocket() {
     socket.onopen = function () {
         console.log('Verbonden met PlaceNL server!')
         socket.send(JSON.stringify({ type: 'getmap' }));
-        socket.send(JSON.stringify({ type: 'brand', brand: `nodeheadless${PREFIX.toUpperCase()}v${VERSION_NUMBER}` }));
+        socket.send(JSON.stringify({ type: 'brand', brand: `nodeheadless-${PREFIX}-V${VERSION_NUMBER}` }));
     };
 
     socket.onmessage = async function (message) {
