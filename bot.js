@@ -3,16 +3,12 @@ import getPixels from "get-pixels";
 import WebSocket from 'ws';
 
 const PREFIX = process.env.PREFIX || "simple"
-const VERSION_NUMBER = 10;
+const VERSION_NUMBER = 9;
 
 console.log(`PlaceNL headless client V${VERSION_NUMBER}`);
 
 const args = process.argv.slice(2);
 
-//if (args.length != 1 && !process.env.ACCESS_TOKEN) {
-//    console.error("Missing access token.")
-//    process.exit(1);
-//}
 if (args.length != 1 && !process.env.REDDIT_SESSION) {
     console.error("Missing reddit_session cookie.")
     process.exit(1);
@@ -300,7 +296,7 @@ async function attemptPlace(accessTokenHolder) {
         } else {
             const nextPixel = data.data.act.data[0].data.nextAvailablePixelTimestamp + 3000;
             const nextPixelDate = new Date(nextPixel);
-            const delay = nextPixelDate.getTime() - Date.now() + Math.floor(Math.random() * 10000); // Random tijd toevoegen tussen 0 en 10 sec om detectie te voorkomen en te spreiden na server herstart. 
+            const delay = nextPixelDate.getTime() - Date.now();
             console.log(`Pixel geplaatst op ${x}, ${y}! Volgende pixel wordt geplaatst om ${nextPixelDate.toLocaleTimeString()}.`)
             setTimeout(retry, delay);
         }
