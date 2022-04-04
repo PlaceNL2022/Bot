@@ -53,7 +53,7 @@ This option is mostly useful for people who are already using docker.
 It has been confirmed to run on x64(average desktop computer) and armv7(raspberry pi), but it should also be able to run on arm64(new apple computers).
 
 1. Install [Docker](https://docs.docker.com/get-docker/)
-2. Run this command: `docker run --pull=always --restart unless-stopped -it ghcr.io/placenl/placenl-bot SESSION_COOKIE_HERE`
+2. Run this command: `docker run --pull=always --restart always -it ghcr.io/placenl/placenl-bot SESSION_COOKIE_HERE`
 
 -----
 
@@ -110,4 +110,4 @@ Dit alternatief is vooral geschikt voor iedereen die al docker gebruikt.
 Het is bevestigd dat het op x64(gemiddelde desktopcomputer) en armv7(raspberry pi) draait, maar het zou ook op arm64(nieuwe Apple-computers) moeten kunnen draaien.
 
 1. Installeer [Docker](https://docs.docker.com/get-docker/)
-2. Start dit command: `docker run --pull=always --restart unless-stopped -it ghcr.io/placenl/placenl-bot SESSIE_COOKIE_HIER`
+2. Start dit command: `docker run --pull=always --restart always -it ghcr.io/placenl/placenl-bot SESSIE_COOKIE_HIER`
