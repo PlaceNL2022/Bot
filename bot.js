@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import getPixels from "get-pixels";
 import WebSocket from 'ws';
 
-const VERSION_NUMBER = 7;
+const VERSION_NUMBER = 8;
 
 console.log(`PlaceNL headless client V${VERSION_NUMBER}`);
 
@@ -66,6 +66,15 @@ const COLOR_MAPPINGS = {
     '#D4D7D9': 30,
     '#FFFFFF': 31
 };
+
+let USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:99.0) Gecko/20100101 Firefox/99.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36 Edg/100.0.1185.29",
+    "Opera/9.32 (Windows NT 6.0; en-US) Presto/2.8.337 Version/11.00",
+    "Mozilla/5.0 (Macintosh; PPC Mac OS X 10_5_9 rv:4.0; sl-SI) AppleWebKit/535.1.7 (KHTML, like Gecko) Version/5.1 Safari/535.1.7",
+    "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_8_7) AppleWebKit/5310 (KHTML, like Gecko) Chrome/38.0.875.0 Mobile Safari/5310"
+];
 
 let rgbaJoinH = (a1, a2, rowSize = 1000, cellSize = 4) => {
     const rawRowSize = rowSize * cellSize;
@@ -317,7 +326,8 @@ function place(x, y, color, accessToken = defaultAccessToken) {
 			'referer': 'https://hot-potato.reddit.com/',
 			'apollographql-client-name': 'mona-lisa',
 			'Authorization': `Bearer ${accessToken}`,
-			'Content-Type': 'application/json'
+			'Content-Type': 'application/json',
+            'User-Agent': USER_AGENTS[Math.floor(Math.random()*USER_AGENTS.length)]
 		}
 	});
 }
