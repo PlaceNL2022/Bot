@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceNL Bot
 // @namespace    https://github.com/PlaceNL/Bot
-// @version      26
+// @version      27
 // @description  De bot voor PlaceNL!
 // @author       NoahvdAa
 // @match        https://www.reddit.com/r/place/*
@@ -33,7 +33,7 @@ const DEFAULT_TOAST_DURATION_MS = 10000;
 const R_PLACE_WIDTH = 2000;
 const R_PLACE_HEIGHT = 2000;
 
-const SCRIPT_BRAND = 'userScriptV21'
+const SCRIPT_BRAND = 'userScriptV27'
 
 // Mapping for canvas ID to pixels
 const CANVAS_MAPPING = {
