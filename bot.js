@@ -387,8 +387,8 @@ async function getCurrentImageUrl(id = '0') {
                 console.error(`[!!] Kon /r/place map niet laden: ${parsed.payload.message}. Is de access token niet meer geldig?`);
             }
 
-            // TODO: ew
-            if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || !parsed.payload.data.subscribe.data) return;
+            if (!parsed.payload || !parsed.payload.data || !parsed.payload.data.subscribe || \
+                !parsed.payload.data.subscribe.data) return;
 
             ws.close();
             resolve(parsed.payload.data.subscribe.data.name + `?noCache=${Date.now() * Math.random()}`);
